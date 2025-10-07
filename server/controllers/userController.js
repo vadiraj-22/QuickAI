@@ -1,5 +1,6 @@
 
 import sql from "../configs/db.js";
+import { clerkClient } from "@clerk/express";
 
  export const  getUserCreations = async(req , res)=>{ 
     try {
@@ -20,7 +21,24 @@ import sql from "../configs/db.js";
     } catch (error) {
         res.json({success: false, message:error.message});
     }
- }
+  }
+
+  export const getUsageData = async(req , res)=>{ 
+    try {
+        const {userId} = req.auth()
+        const plan = req.plan
+        const free_usage = req.free_usage
+        
+        res.json({
+            success: true, 
+            usageCount: free_usage || 0,
+            isPremium: plan === 'premium'
+        });
+
+    } catch (error) {
+        res.json({success: false, message:error.message});
+    }
+  }
 
   export const  toggleLikeCreations = async(req , res)=>{ 
     try {

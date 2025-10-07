@@ -110,9 +110,11 @@ export const generateImage = async (req, res) => {
         const { userId } = req.auth();
         const { prompt, publish } = req.body;
         const plan = req.plan;
+        const free_usage = req.free_usage;
 
-        if (plan !== 'premium') {
-            return res.json({ success: false, message: "This feature is only available for premium subscriptions." })
+        // Check if free user has reached the 5 image limit
+        if (plan !== 'premium' && free_usage >= 5) {
+            return res.json({ success: false, message: "You've reached your free limit of 5 images. Upgrade to premium for unlimited image generation." })
         }
 
 
@@ -130,8 +132,14 @@ export const generateImage = async (req, res) => {
         await sql`INSERT into creations (user_id ,prompt , content ,type ,publish)
         values(${userId},${prompt}, ${secure_url},'image',${publish ?? false})`;
 
-        
-
+        // Increment free usage counter for free users
+        if (plan !== 'premium') {
+            await clerkClient.users.updateUserMetadata(userId, {
+                privateMetadata: {
+                    free_usage: free_usage + 1
+                }
+            })
+        }
 
         res.json({ success: true, content: secure_url })
 
