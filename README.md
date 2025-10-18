@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Quick AI Banner](./assets/banner.png)
+![Quick AI Banner](./assets/screenshots/banner.png)
 
 **A powerful AI-powered platform that brings multiple AI tools under one roof**
 
@@ -70,15 +70,15 @@ No installation required - try all features directly in your browser!
 ## 📸 Screenshots
 
 ### Home Page
-![Home Page](./assets/screenshots/home.png)
+![Home Page](./assets/screenshots/Screenshot%202025-10-18%20225626.png)
 *Modern and intuitive landing page showcasing all AI tools*
 
 ### Dashboard
-![Dashboard](./assets/screenshots/dashboard.png)
+![Dashboard](./assets/screenshots/Screenshot%202025-10-18%20225742.png)
 *Clean dashboard interface with easy access to all features*
 
 ### Article Writer
-![Article Writer](./assets/screenshots/article-writer.png)
+![Article Writer](./assets/screenshots/Article-Title-Generation.png)
 *AI-powered article generation with real-time preview*
 
 ### Image Generation
@@ -88,6 +88,10 @@ No installation required - try all features directly in your browser!
 ### Background Removal
 ![Background Removal](./assets/screenshots/background-removal.png)
 *One-click background removal with AI precision*
+
+### Object Removal
+![Object Removal](./assets/screenshots/Object-remove.png)
+*Remove unwanted objects from photos with AI precision*
 
 ### Resume Review
 ![Resume Review](./assets/screenshots/resume-review.png)
