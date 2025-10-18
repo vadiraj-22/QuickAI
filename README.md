@@ -75,6 +75,7 @@ No installation required - try all features directly in your browser!
 
 ### Dashboard
 ![Dashboard](./assets/screenshots/Dashboard.png)
+![Dashboard](./assets/screenshots/Dashboard.png)
 *Clean dashboard interface with easy access to all features*
 
 ### Article Writer
@@ -361,8 +362,8 @@ This project is licensed under the ISC License.
 ## 👨‍💻 Author
 
 **Your Name**
-- GitHub: [@yourusername](https://github.com/vadiraj-22)
-- LinkedIn: [Your LinkedIn](https://linkedin.com/in/vadiraj-joshi220504)
+- GitHub: (https://github.com/vadiraj-22)
+- LinkedIn: (https://linkedin.com/in/vadiraj-joshi220504)
 
 ---
 
