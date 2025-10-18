@@ -245,50 +245,6 @@ npm start
 
 ---
 
-## 🚀 Deployment
-
-This project is deployed on **Vercel** and is live at: [https://quick-ai-gray.vercel.app/](https://quick-ai-gray.vercel.app/)
-
-### Deploy Your Own Instance
-
-#### Frontend (Vercel)
-
-1. **Push your code to GitHub**
-   ```bash
-   git add .
-   git commit -m "Ready for deployment"
-   git push origin main
-   ```
-
-2. **Deploy to Vercel**
-   - Go to [vercel.com](https://vercel.com/)
-   - Import your GitHub repository
-   - Select the `client` folder as the root directory
-   - Add environment variables:
-     - `VITE_CLERK_PUBLISHABLE_KEY`
-     - `VITE_API_URL` (your backend URL)
-   - Click Deploy
-
-#### Backend (Vercel/Railway/Render)
-
-**Option 1: Vercel**
-- Import the repository
-- Select the `server` folder
-- Add all required environment variables
-- Deploy
-
-**Option 2: Railway**
-- Connect your GitHub repository
-- Select the `server` folder
-- Add environment variables
-- Deploy
-
-**Option 3: Render**
-- Create a new Web Service
-- Connect your repository
-- Set root directory to `server`
-- Add environment variables
-- Deploy
 
 ### Environment Variables for Production
 
@@ -379,34 +335,6 @@ Upload your resume and receive detailed feedback on formatting, content, keyword
 
 ---
 
-## 🔧 Troubleshooting
-
-### Common Issues
-
-**Port Already in Use**
-```bash
-# Kill the process using the port
-# Windows
-netstat -ano | findstr :3000
-taskkill /PID <PID> /F
-
-# Linux/Mac
-lsof -ti:3000 | xargs kill -9
-```
-
-**Module Not Found**
-```bash
-# Clear node_modules and reinstall
-rm -rf node_modules package-lock.json
-npm install
-```
-
-**Environment Variables Not Loading**
-- Ensure `.env` files are in the correct directories
-- Restart the development servers after changing `.env` files
-- Check for typos in variable names
-
----
 
 ## 🤝 Contributing
 
@@ -429,8 +357,8 @@ This project is licensed under the ISC License.
 ## 👨‍💻 Author
 
 **Your Name**
-- GitHub: [@yourusername](https://github.com/yourusername)
-- LinkedIn: [Your LinkedIn](https://linkedin.com/in/yourprofile)
+- GitHub: [@yourusername](https://github.com/vadiraj-22)
+- LinkedIn: [Your LinkedIn](https://linkedin.com/in/vadiraj-joshi220504)
 
 ---
 
