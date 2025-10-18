@@ -29,7 +29,6 @@
 - [Installation](#installation)
 - [Environment Variables](#environment-variables)
 - [Running the Application](#running-the-application)
-- [Deployment](#deployment)
 - [Project Structure](#project-structure)
 - [Contributing](#contributing)
 - [License](#license)
@@ -74,7 +73,6 @@ No installation required - try all features directly in your browser!
 *Modern and intuitive landing page showcasing all AI tools*
 
 ### Dashboard
-![Dashboard](./assets/screenshots/Dashboard.png)
 ![Dashboard](./assets/screenshots/Dashboard.png)
 *Clean dashboard interface with easy access to all features*
 
