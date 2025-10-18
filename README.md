@@ -70,11 +70,11 @@ No installation required - try all features directly in your browser!
 ## 📸 Screenshots
 
 ### Home Page
-![Home Page](./assets/screenshots/Screenshot%202025-10-18%20225626.png)
+![Home Page](./assets/screenshots/Content.png)
 *Modern and intuitive landing page showcasing all AI tools*
 
 ### Dashboard
-![Dashboard](./assets/screenshots/Screenshot%202025-10-18%20225742.png)
+![Dashboard](./assets/screenshots/Dashboard.png)
 *Clean dashboard interface with easy access to all features*
 
 ### Article Writer
@@ -361,8 +361,8 @@ This project is licensed under the ISC License.
 ## 👨‍💻 Author
 
 **Your Name**
-- GitHub: [@yourusername](https://github.com/vadiraj-22)
-- LinkedIn: [Your LinkedIn](https://linkedin.com/in/vadiraj-joshi220504)
+- GitHub: (https://github.com/vadiraj-22)
+- LinkedIn: (https://linkedin.com/in/vadiraj-joshi220504)
 
 ---
 
