@@ -29,9 +29,21 @@ import { clerkClient } from "@clerk/express";
         const plan = req.plan
         const free_usage = req.free_usage
         
+        // Get usage data for background, object removal, and resume review
+        const user = await clerkClient.users.getUser(userId);
+        const bgRemovalUsage = user.privateMetadata?.bg_removal_usage || 0;
+        const objRemovalUsage = user.privateMetadata?.obj_removal_usage || 0;
+        const resumeReviewUsage = user.privateMetadata?.resume_review_usage || 0;
+        
         res.json({
             success: true, 
             usageCount: free_usage || 0,
+            bgRemovalUsage: bgRemovalUsage,
+            bgRemovalLeft: plan === 'premium' ? 'unlimited' : 5 - bgRemovalUsage,
+            objRemovalUsage: objRemovalUsage,
+            objRemovalLeft: plan === 'premium' ? 'unlimited' : 5 - objRemovalUsage,
+            resumeReviewUsage: resumeReviewUsage,
+            resumeReviewLeft: plan === 'premium' ? 'unlimited' : 10 - resumeReviewUsage,
             isPremium: plan === 'premium'
         });
 

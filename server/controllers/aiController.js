@@ -158,8 +158,13 @@ export const removeImageBackground = async (req, res) => {
         const image  = req.file;
         const plan = req.plan;
 
-        if (plan !== 'premium') {
-            return res.json({ success: false, message: "This feature is only available for premium subscriptions." })
+        // Get current usage count for background removal
+        const user = await clerkClient.users.getUser(userId);
+        const bgRemovalUsage = user.privateMetadata?.bg_removal_usage || 0;
+
+        // Check if free user has reached the 5 usage limit
+        if (plan !== 'premium' && bgRemovalUsage >= 5) {
+            return res.json({ success: false, message: "You've reached your free limit of 5 background removals. Upgrade to premium for unlimited usage." })
         }
 
         const { secure_url } = await cloudinary.uploader.upload(image.path, {
@@ -174,9 +179,21 @@ export const removeImageBackground = async (req, res) => {
         await sql`INSERT into creations (user_id ,prompt , content ,type )
         values(${userId},'Remove background from the image', ${secure_url},'image')`;
 
+        // Increment usage counter for free users
+        const newUsage = bgRemovalUsage + 1;
+        if (plan !== 'premium') {
+            await clerkClient.users.updateUserMetadata(userId, {
+                privateMetadata: {
+                    bg_removal_usage: newUsage
+                }
+            })
+        }
 
-
-        res.json({ success: true, content: secure_url })
+        res.json({ 
+            success: true, 
+            content: secure_url,
+            usageLeft: plan === 'premium' ? 'unlimited' : 5 - newUsage
+        })
 
     }
 
@@ -193,8 +210,13 @@ export const removeImageObject = async (req, res) => {
         const plan = req.plan;
         const { object } = req.body;
 
-        if (plan !== 'premium') {
-            return res.json({ success: false, message: "This feature is only available for premium subscriptions." })
+        // Get current usage count for object removal
+        const user = await clerkClient.users.getUser(userId);
+        const objRemovalUsage = user.privateMetadata?.obj_removal_usage || 0;
+
+        // Check if free user has reached the 5 usage limit
+        if (plan !== 'premium' && objRemovalUsage >= 5) {
+            return res.json({ success: false, message: "You've reached your free limit of 5 object removals. Upgrade to premium for unlimited usage." })
         }
 
         const { public_id } = await cloudinary.uploader.upload(image.path)
@@ -207,9 +229,21 @@ export const removeImageObject = async (req, res) => {
         await sql`INSERT into creations (user_id ,prompt , content ,type )
         values(${userId}, ${`Remove ${object} from the image`}, ${imageUrl},'image')`;
 
+        // Increment usage counter for free users
+        const newUsage = objRemovalUsage + 1;
+        if (plan !== 'premium') {
+            await clerkClient.users.updateUserMetadata(userId, {
+                privateMetadata: {
+                    obj_removal_usage: newUsage
+                }
+            })
+        }
 
-
-        res.json({ success: true, content: imageUrl })
+        res.json({ 
+            success: true, 
+            content: imageUrl,
+            usageLeft: plan === 'premium' ? 'unlimited' : 5 - newUsage
+        })
 
     }
 
@@ -225,9 +259,13 @@ export const resumeReview = async (req, res) => {
         const resume = req.file;
         const plan = req.plan;
 
+        // Get current usage count for resume review
+        const user = await clerkClient.users.getUser(userId);
+        const resumeReviewUsage = user.privateMetadata?.resume_review_usage || 0;
 
-        if (plan !== 'premium') {
-            return res.json({ success: false, message: "This feature is only available for premium subscriptions." })
+        // Check if free user has reached the 10 usage limit
+        if (plan !== 'premium' && resumeReviewUsage >= 10) {
+            return res.json({ success: false, message: "You've reached your free limit of 10 resume reviews. Upgrade to premium for unlimited usage." })
         }
 
         if (resume.size > 5 * 1024 * 1024) {
@@ -253,9 +291,21 @@ export const resumeReview = async (req, res) => {
         await sql`INSERT into creations (user_id ,prompt , content ,type )
         values(${userId}, 'Review the uploaded Resume', ${content},'resume-review')`;
 
+        // Increment usage counter for free users
+        const newUsage = resumeReviewUsage + 1;
+        if (plan !== 'premium') {
+            await clerkClient.users.updateUserMetadata(userId, {
+                privateMetadata: {
+                    resume_review_usage: newUsage
+                }
+            })
+        }
 
-
-        res.json({ success: true, content })
+        res.json({ 
+            success: true, 
+            content,
+            usageLeft: plan === 'premium' ? 'unlimited' : 10 - newUsage
+        })
 
     }
 
