@@ -2,8 +2,12 @@ import express from 'express'
 import { generateArticle, generateBlogTitle, generateImage, removeImageBackground, removeImageObject, resumeReview } from '../controllers/aiController.js';
 import { auth } from '../middlewares/auth.js';
 import { upload } from '../configs/multer.js';
+import { requireAuth } from '@clerk/express';
 
 const aiRouter = express.Router();
+
+// Apply requireAuth to all routes in this router
+aiRouter.use(requireAuth())
 
 aiRouter.post('/generate-article',auth,generateArticle)
 aiRouter.post('/generate-blog-title',auth,generateBlogTitle)

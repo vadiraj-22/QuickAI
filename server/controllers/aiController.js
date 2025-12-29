@@ -55,8 +55,37 @@ export const generateArticle = async (req, res) => {
     }
 
     catch (error) {
-        console.log(error.message);
-        res.json({ success: false, message: error.message })
+        console.log('Error details:', error);
+        console.log('Error message:', error.message);
+        console.log('Error status:', error.status);
+        console.log('Error response:', error.response?.data);
+        
+        // Handle rate limit errors
+        if (error.status === 429 || 
+            error.response?.status === 429 ||
+            error.message?.includes('429') || 
+            error.message?.includes('rate limit') ||
+            error.message?.includes('Rate limit')) {
+            return res.json({ 
+                success: false, 
+                message: "API rate limit exceeded. Please wait a moment and try again." 
+            })
+        }
+        
+        // Handle quota exceeded errors
+        if (error.message?.includes('quota') || 
+            error.message?.includes('RESOURCE_EXHAUSTED') ||
+            error.response?.data?.error?.message?.includes('quota')) {
+            return res.json({ 
+                success: false, 
+                message: "API quota exceeded. Please try again later or check your API key." 
+            })
+        }
+        
+        res.json({ 
+            success: false, 
+            message: error.message || error.response?.data?.error?.message || "An error occurred while generating content." 
+        })
     }
 }
 
@@ -99,8 +128,37 @@ export const generateBlogTitle = async (req, res) => {
     }
 
     catch (error) {
-        console.log(error.message);
-        res.json({ success: false, message: error.message })
+        console.log('Error details:', error);
+        console.log('Error message:', error.message);
+        console.log('Error status:', error.status);
+        console.log('Error response:', error.response?.data);
+        
+        // Handle rate limit errors
+        if (error.status === 429 || 
+            error.response?.status === 429 ||
+            error.message?.includes('429') || 
+            error.message?.includes('rate limit') ||
+            error.message?.includes('Rate limit')) {
+            return res.json({ 
+                success: false, 
+                message: "API rate limit exceeded. Please wait a moment and try again." 
+            })
+        }
+        
+        // Handle quota exceeded errors
+        if (error.message?.includes('quota') || 
+            error.message?.includes('RESOURCE_EXHAUSTED') ||
+            error.response?.data?.error?.message?.includes('quota')) {
+            return res.json({ 
+                success: false, 
+                message: "API quota exceeded. Please try again later or check your API key." 
+            })
+        }
+        
+        res.json({ 
+            success: false, 
+            message: error.message || error.response?.data?.error?.message || "An error occurred while generating content." 
+        })
     }
 }
 
@@ -167,17 +225,25 @@ export const removeImageBackground = async (req, res) => {
             return res.json({ success: false, message: "You've reached your free limit of 5 background removals. Upgrade to premium for unlimited usage." })
         }
 
-        const { secure_url } = await cloudinary.uploader.upload(image.path, {
+        // Upload image first without transformation
+        const uploadResult = await cloudinary.uploader.upload(image.path, {
+            resource_type: 'image'
+        })
+
+        // Generate URL with background removal transformation
+        const imageUrl = cloudinary.url(uploadResult.public_id, {
             transformation: [
                 {
                     effect: 'background_removal',
                     background_removal: 'remove_the_background'
                 }
-            ]
+            ],
+            resource_type: 'image',
+            secure: true
         })
 
         await sql`INSERT into creations (user_id ,prompt , content ,type )
-        values(${userId},'Remove background from the image', ${secure_url},'image')`;
+        values(${userId},'Remove background from the image', ${imageUrl},'image')`;
 
         // Increment usage counter for free users
         const newUsage = bgRemovalUsage + 1;
@@ -191,7 +257,7 @@ export const removeImageBackground = async (req, res) => {
 
         res.json({ 
             success: true, 
-            content: secure_url,
+            content: imageUrl,
             usageLeft: plan === 'premium' ? 'unlimited' : 5 - newUsage
         })
 
@@ -310,7 +376,36 @@ export const resumeReview = async (req, res) => {
     }
 
     catch (error) {
-        console.log(error.message);
-        res.json({ success: false, message: error.message })
+        console.log('Error details:', error);
+        console.log('Error message:', error.message);
+        console.log('Error status:', error.status);
+        console.log('Error response:', error.response?.data);
+        
+        // Handle rate limit errors
+        if (error.status === 429 || 
+            error.response?.status === 429 ||
+            error.message?.includes('429') || 
+            error.message?.includes('rate limit') ||
+            error.message?.includes('Rate limit')) {
+            return res.json({ 
+                success: false, 
+                message: "API rate limit exceeded. Please wait a moment and try again." 
+            })
+        }
+        
+        // Handle quota exceeded errors
+        if (error.message?.includes('quota') || 
+            error.message?.includes('RESOURCE_EXHAUSTED') ||
+            error.response?.data?.error?.message?.includes('quota')) {
+            return res.json({ 
+                success: false, 
+                message: "API quota exceeded. Please try again later or check your API key." 
+            })
+        }
+        
+        res.json({ 
+            success: false, 
+            message: error.message || error.response?.data?.error?.message || "An error occurred while processing your request." 
+        })
     }
 }
