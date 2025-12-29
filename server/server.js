@@ -20,7 +20,7 @@ const allowedOrigins = [
     'http://localhost:3000'
 ];
 
-app.use(cors({
+const corsOptions = {
     origin: function (origin, callback) {
         if (!origin) return callback(null, true);
         if (allowedOrigins.indexOf(origin) !== -1 || process.env.CLIENT_URL === origin) {
@@ -36,10 +36,12 @@ app.use(cors({
     maxAge: 86400,
     preflightContinue: false,
     optionsSuccessStatus: 204
-}))
+};
 
-// Handle OPTIONS requests explicitly
-app.options('*', cors())
+app.use(cors(corsOptions));
+
+// Handle OPTIONS requests explicitly using the same options
+app.options('*', cors(corsOptions));
 
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
