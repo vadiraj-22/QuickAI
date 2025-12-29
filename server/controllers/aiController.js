@@ -27,7 +27,7 @@ export const generateArticle = async (req, res) => {
         }
 
         const response = await AI.chat.completions.create({
-            model: "gemini-1.5-flash",
+            model: "gemini-2.0-flash",
             messages: [{
                 role: "user",
                 content: prompt,
@@ -59,32 +59,32 @@ export const generateArticle = async (req, res) => {
         console.log('Error message:', error.message);
         console.log('Error status:', error.status);
         console.log('Error response:', error.response?.data);
-        
+
         // Handle rate limit errors
-        if (error.status === 429 || 
+        if (error.status === 429 ||
             error.response?.status === 429 ||
-            error.message?.includes('429') || 
+            error.message?.includes('429') ||
             error.message?.includes('rate limit') ||
             error.message?.includes('Rate limit')) {
-            return res.json({ 
-                success: false, 
-                message: "API rate limit exceeded. Please wait a moment and try again." 
+            return res.json({
+                success: false,
+                message: "API rate limit exceeded. Please wait a moment and try again."
             })
         }
-        
+
         // Handle quota exceeded errors
-        if (error.message?.includes('quota') || 
+        if (error.message?.includes('quota') ||
             error.message?.includes('RESOURCE_EXHAUSTED') ||
             error.response?.data?.error?.message?.includes('quota')) {
-            return res.json({ 
-                success: false, 
-                message: "API quota exceeded. Please try again later or check your API key." 
+            return res.json({
+                success: false,
+                message: "API quota exceeded. Please try again later or check your API key."
             })
         }
-        
-        res.json({ 
-            success: false, 
-            message: error.message || error.response?.data?.error?.message || "An error occurred while generating content." 
+
+        res.json({
+            success: false,
+            message: error.message || error.response?.data?.error?.message || "An error occurred while generating content."
         })
     }
 }
@@ -132,32 +132,32 @@ export const generateBlogTitle = async (req, res) => {
         console.log('Error message:', error.message);
         console.log('Error status:', error.status);
         console.log('Error response:', error.response?.data);
-        
+
         // Handle rate limit errors
-        if (error.status === 429 || 
+        if (error.status === 429 ||
             error.response?.status === 429 ||
-            error.message?.includes('429') || 
+            error.message?.includes('429') ||
             error.message?.includes('rate limit') ||
             error.message?.includes('Rate limit')) {
-            return res.json({ 
-                success: false, 
-                message: "API rate limit exceeded. Please wait a moment and try again." 
+            return res.json({
+                success: false,
+                message: "API rate limit exceeded. Please wait a moment and try again."
             })
         }
-        
+
         // Handle quota exceeded errors
-        if (error.message?.includes('quota') || 
+        if (error.message?.includes('quota') ||
             error.message?.includes('RESOURCE_EXHAUSTED') ||
             error.response?.data?.error?.message?.includes('quota')) {
-            return res.json({ 
-                success: false, 
-                message: "API quota exceeded. Please try again later or check your API key." 
+            return res.json({
+                success: false,
+                message: "API quota exceeded. Please try again later or check your API key."
             })
         }
-        
-        res.json({ 
-            success: false, 
-            message: error.message || error.response?.data?.error?.message || "An error occurred while generating content." 
+
+        res.json({
+            success: false,
+            message: error.message || error.response?.data?.error?.message || "An error occurred while generating content."
         })
     }
 }
@@ -213,7 +213,7 @@ export const generateImage = async (req, res) => {
 export const removeImageBackground = async (req, res) => {
     try {
         const { userId } = req.auth();
-        const image  = req.file;
+        const image = req.file;
         const plan = req.plan;
 
         // Get current usage count for background removal
@@ -255,8 +255,8 @@ export const removeImageBackground = async (req, res) => {
             })
         }
 
-        res.json({ 
-            success: true, 
+        res.json({
+            success: true,
             content: imageUrl,
             usageLeft: plan === 'premium' ? 'unlimited' : 5 - newUsage
         })
@@ -272,7 +272,7 @@ export const removeImageBackground = async (req, res) => {
 export const removeImageObject = async (req, res) => {
     try {
         const { userId } = req.auth();
-        const image  = req.file;
+        const image = req.file;
         const plan = req.plan;
         const { object } = req.body;
 
@@ -288,7 +288,7 @@ export const removeImageObject = async (req, res) => {
         const { public_id } = await cloudinary.uploader.upload(image.path)
 
         const imageUrl = cloudinary.url(public_id, {
-            transformation: [{ effect: `gen_remove:${object}`    }],
+            transformation: [{ effect: `gen_remove:${object}` }],
             resource_type: 'image'
         })
 
@@ -305,8 +305,8 @@ export const removeImageObject = async (req, res) => {
             })
         }
 
-        res.json({ 
-            success: true, 
+        res.json({
+            success: true,
             content: imageUrl,
             usageLeft: plan === 'premium' ? 'unlimited' : 5 - newUsage
         })
@@ -346,7 +346,7 @@ export const resumeReview = async (req, res) => {
 
         const response = await AI.chat.completions.create({
             model: "gemini-2.0-flash",
-            messages: [{role: "user", content: prompt,}],
+            messages: [{ role: "user", content: prompt, }],
             temperature: 0.7,
             max_tokens: 1000,
         });
@@ -367,8 +367,8 @@ export const resumeReview = async (req, res) => {
             })
         }
 
-        res.json({ 
-            success: true, 
+        res.json({
+            success: true,
             content,
             usageLeft: plan === 'premium' ? 'unlimited' : 10 - newUsage
         })
@@ -380,32 +380,32 @@ export const resumeReview = async (req, res) => {
         console.log('Error message:', error.message);
         console.log('Error status:', error.status);
         console.log('Error response:', error.response?.data);
-        
+
         // Handle rate limit errors
-        if (error.status === 429 || 
+        if (error.status === 429 ||
             error.response?.status === 429 ||
-            error.message?.includes('429') || 
+            error.message?.includes('429') ||
             error.message?.includes('rate limit') ||
             error.message?.includes('Rate limit')) {
-            return res.json({ 
-                success: false, 
-                message: "API rate limit exceeded. Please wait a moment and try again." 
+            return res.json({
+                success: false,
+                message: "API rate limit exceeded. Please wait a moment and try again."
             })
         }
-        
+
         // Handle quota exceeded errors
-        if (error.message?.includes('quota') || 
+        if (error.message?.includes('quota') ||
             error.message?.includes('RESOURCE_EXHAUSTED') ||
             error.response?.data?.error?.message?.includes('quota')) {
-            return res.json({ 
-                success: false, 
-                message: "API quota exceeded. Please try again later or check your API key." 
+            return res.json({
+                success: false,
+                message: "API quota exceeded. Please try again later or check your API key."
             })
         }
-        
-        res.json({ 
-            success: false, 
-            message: error.message || error.response?.data?.error?.message || "An error occurred while processing your request." 
+
+        res.json({
+            success: false,
+            message: error.message || error.response?.data?.error?.message || "An error occurred while processing your request."
         })
     }
 }
