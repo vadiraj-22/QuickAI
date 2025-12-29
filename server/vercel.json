@@ -5,6 +5,7 @@
             "src": "server.js",
             "use": "@vercel/node",
             "config": {
+                "maxDuration": 60,
                 "includeFiles": [
                     "dist/**"
                 ]
@@ -16,5 +17,11 @@
             "src": "/(.*)",
             "dest": "server.js"
         }
-    ]
+    ],
+    "functions": {
+        "server.js": {
+            "maxDuration": 60,
+            "memory": 1024
+        }
+    }
 }
