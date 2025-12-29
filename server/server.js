@@ -13,7 +13,7 @@ const app=express()
 
 await connectCloudinary()
 
-// Configure CORS with specific options for production
+// Configure CORS BEFORE any other middleware
 const allowedOrigins = [
     'https://quick-ai-gray.vercel.app',
     'http://localhost:5173',
@@ -22,21 +22,24 @@ const allowedOrigins = [
 
 app.use(cors({
     origin: function (origin, callback) {
-        // Allow requests with no origin (like mobile apps or curl requests)
         if (!origin) return callback(null, true);
-        
         if (allowedOrigins.indexOf(origin) !== -1 || process.env.CLIENT_URL === origin) {
             callback(null, true);
         } else {
-            callback(new Error('Not allowed by CORS'));
+            callback(null, true); // Allow all for now to debug
         }
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'x-clerk-auth-status', 'x-clerk-auth-reason', 'x-clerk-auth-message'],
     exposedHeaders: ['Content-Length', 'Content-Type'],
-    maxAge: 86400
+    maxAge: 86400,
+    preflightContinue: false,
+    optionsSuccessStatus: 204
 }))
+
+// Handle OPTIONS requests explicitly
+app.options('*', cors())
 
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
