@@ -1,43 +1,74 @@
-import OpenAI from "openai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import sql from "../configs/db.js";
 import { clerkClient } from "@clerk/express";
 import FormData from 'form-data';
 import axios from 'axios';
 import fs from 'fs'
 import pdf from 'pdf-parse/lib/pdf-parse.js'
-
-
 import { v2 as cloudinary } from 'cloudinary'
 
-const AI = new OpenAI({
-    apiKey: process.env.GEMINI_API_KEY,
-    baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/"
-});
+// Initialize Google Generative AI
+// Trim the key to remove accidental spaces from .env
+const apiKey = process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.trim() : "";
+if (!apiKey) {
+    console.error("❌ ERROR: GEMINI_API_KEY is missing or empty in .env file!");
+} else {
+    console.log(`✅ Gemini API Key found (starts with: ${apiKey.substring(0, 5)}...)`);
+}
+const genAI = new GoogleGenerativeAI(apiKey);
 
+// Helper function to get model instance (can be easily changed centrally)
+// Using gemini-2.5-flash - latest stable model with good free tier limits
+const getModel = () => genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+// Helper function for exponential backoff retry logic
+const generateWithRetry = async (operation, maxRetries = 5) => {
+    for (let i = 0; i < maxRetries; i++) {
+        try {
+            return await operation();
+        } catch (error) {
+            // Check for rate limit (429) or overloaded (503) errors
+            const isRateLimit = error.message?.includes('429') || error.status === 429 || error.message?.includes('Too Many Requests');
+            const isOverloaded = error.message?.includes('503') || error.status === 503;
+            // Check for Quota Exceeded (Resource Exhausted) which implies 429 but longer term
+            const isQuota = error.message?.includes('Quota') || error.message?.includes('RESOURCE_EXHAUSTED');
+
+            if (isQuota) {
+                console.error("Gemini Quota Exceeded. Retries will not help for this request.");
+                // We throw immediately because waiting a few seconds won't fix a daily quota
+                throw error;
+            }
+
+            if ((isRateLimit || isOverloaded) && i < maxRetries - 1) {
+                // Exponential backoff: 2s, 4s, 8s, 16s, 32s
+                const delay = Math.pow(2, i + 1) * 1000 + Math.random() * 1000;
+                console.log(`Gemini API Busy/Rate Limited (Attempt ${i + 1}/${maxRetries}). Waiting ${Math.round(delay)}ms...`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                continue;
+            }
+            throw error;
+        }
+    }
+};
 
 export const generateArticle = async (req, res) => {
     try {
-        const { userId } = req.auth();
+        const { userId } = req.auth;
         const { prompt, length } = req.body;
         const plan = req.plan;
         const free_usage = req.free_usage;
 
         if (plan !== 'premium' && free_usage >= 10) {
-            return res.json({ success: false, message: "Limit reached upgrade to continue." })
+            return res.json({ success: false, message: "Free limit reached. usage limit is 10 " })
         }
 
-        const response = await AI.chat.completions.create({
-            model: "gemini-2.0-flash",
-            messages: [{
-                role: "user",
-                content: prompt,
-            },
-            ],
-            temperature: 0.7,
-            max_tokens: length,
-        });
+        const model = getModel();
 
-        const content = response.choices[0].message.content
+        // Construct a better prompt with length instruction
+        const fullPrompt = `Write a comprehensive article about "${prompt}". The article should be approximately ${length} words long. Use markdown formatting.`;
+
+        const result = await generateWithRetry(() => model.generateContent(fullPrompt));
+        const content = result.response.text();
 
         await sql`INSERT into creations (user_id ,prompt , content ,type )
         values(${userId},${prompt},${content},'article')`;
@@ -52,65 +83,39 @@ export const generateArticle = async (req, res) => {
 
         res.json({ success: true, content })
 
-    }
+    } catch (error) {
+        console.error('Error generating article:', error);
 
-    catch (error) {
-        console.log('Error details:', error);
-        console.log('Error message:', error.message);
-        console.log('Error status:', error.status);
-        console.log('Error response:', error.response?.data);
+        // Return appropriate error message to client
+        let message = "Failed to generate article. Please try again.";
 
-        // Handle rate limit errors
-        if (error.status === 429 ||
-            error.response?.status === 429 ||
-            error.message?.includes('429') ||
-            error.message?.includes('rate limit') ||
-            error.message?.includes('Rate limit')) {
-            return res.json({
-                success: false,
-                message: "API rate limit exceeded. Please wait a moment and try again."
-            })
+        if (error.message?.includes('429') || error.message?.includes('Too Many Requests')) {
+            message = "Server is busy with too many requests. Please try again in a moment.";
+        } else if (error.message?.includes('Quota') || error.message?.includes('RESOURCE_EXHAUSTED')) {
+            message = "API Usage Quota Exceeded. Please try again later or upgrade.";
+        } else if (error.message?.includes('API_KEY_INVALID') || error.status === 400) {
+            message = "Invalid Gemini API Key. Please check your .env file.";
         }
 
-        // Handle quota exceeded errors
-        if (error.message?.includes('quota') ||
-            error.message?.includes('RESOURCE_EXHAUSTED') ||
-            error.response?.data?.error?.message?.includes('quota')) {
-            return res.json({
-                success: false,
-                message: "API quota exceeded. Please try again later or check your API key."
-            })
-        }
-
-        res.json({
-            success: false,
-            message: error.message || error.response?.data?.error?.message || "An error occurred while generating content."
-        })
+        res.json({ success: false, message });
     }
 }
 
 export const generateBlogTitle = async (req, res) => {
     try {
-        const { userId } = req.auth();
+        const { userId } = req.auth;
         const { prompt } = req.body;
         const plan = req.plan;
         const free_usage = req.free_usage;
 
         if (plan !== 'premium' && free_usage >= 10) {
-            return res.json({ success: false, message: "Limit reached upgrade to continue." })
+            return res.json({ success: false, message: "Free limit reached. usage limit is 10" })
         }
 
-        const response = await AI.chat.completions.create({
-            model: "gemini-2.0-flash",
-            messages: [{
-                role: "user", content: prompt,
-            },
-            ],
-            temperature: 0.7,
-            max_tokens: 100,
-        });
+        const model = getModel();
 
-        const content = response.choices[0].message.content
+        const result = await generateWithRetry(() => model.generateContent(prompt));
+        const content = result.response.text();
 
         await sql`INSERT into creations (user_id ,prompt , content ,type )
         values(${userId},${prompt},${content},'blog-title')`;
@@ -125,47 +130,26 @@ export const generateBlogTitle = async (req, res) => {
 
         res.json({ success: true, content })
 
-    }
+    } catch (error) {
+        console.error('Error generating blog title:', error);
+        let message = "Failed to generate blog title. Please try again.";
 
-    catch (error) {
-        console.log('Error details:', error);
-        console.log('Error message:', error.message);
-        console.log('Error status:', error.status);
-        console.log('Error response:', error.response?.data);
-
-        // Handle rate limit errors
-        if (error.status === 429 ||
-            error.response?.status === 429 ||
-            error.message?.includes('429') ||
-            error.message?.includes('rate limit') ||
-            error.message?.includes('Rate limit')) {
-            return res.json({
-                success: false,
-                message: "API rate limit exceeded. Please wait a moment and try again."
-            })
+        if (error.message?.includes('429') || error.message?.includes('Too Many Requests')) {
+            message = "Server is busy with too many requests. Please try again in a moment.";
+        } else if (error.message?.includes('Quota') || error.message?.includes('RESOURCE_EXHAUSTED')) {
+            message = "API Usage Quota Exceeded. Please try again later or upgrade.";
+        } else if (error.message?.includes('API_KEY_INVALID') || error.status === 400) {
+            message = "Invalid Gemini API Key. Please check your .env file.";
         }
 
-        // Handle quota exceeded errors
-        if (error.message?.includes('quota') ||
-            error.message?.includes('RESOURCE_EXHAUSTED') ||
-            error.response?.data?.error?.message?.includes('quota')) {
-            return res.json({
-                success: false,
-                message: "API quota exceeded. Please try again later or check your API key."
-            })
-        }
-
-        res.json({
-            success: false,
-            message: error.message || error.response?.data?.error?.message || "An error occurred while generating content."
-        })
+        res.json({ success: false, message });
     }
 }
 
 
 export const generateImage = async (req, res) => {
     try {
-        const { userId } = req.auth();
+        const { userId } = req.auth;
         const { prompt, publish } = req.body;
         const plan = req.plan;
         const free_usage = req.free_usage;
@@ -175,9 +159,10 @@ export const generateImage = async (req, res) => {
             return res.json({ success: false, message: "You've reached your free limit of 5 images. Upgrade to premium for unlimited image generation." })
         }
 
-
         const formData = new FormData()
         formData.append('prompt', prompt)
+
+        // Note: Using ClipDrop for images, not Gemini
         const response = await axios.post("https://clipdrop-api.co/text-to-image/v1", formData, {
             headers: { 'x-api-key': process.env.CLIPDROP_API_KEY },
             responseType: "arraybuffer",
@@ -201,18 +186,16 @@ export const generateImage = async (req, res) => {
 
         res.json({ success: true, content: secure_url })
 
-    }
-
-    catch (error) {
-        console.log(error.message);
-        res.json({ success: false, message: error.message })
+    } catch (error) {
+        console.error('Error generating image:', error.message);
+        res.json({ success: false, message: error.message || "Failed to generate image" })
     }
 }
 
 
 export const removeImageBackground = async (req, res) => {
     try {
-        const { userId } = req.auth();
+        const { userId } = req.auth;
         const image = req.file;
         const plan = req.plan;
 
@@ -261,17 +244,15 @@ export const removeImageBackground = async (req, res) => {
             usageLeft: plan === 'premium' ? 'unlimited' : 5 - newUsage
         })
 
-    }
-
-    catch (error) {
-        console.log(error.message);
-        res.json({ success: false, message: error.message })
+    } catch (error) {
+        console.error('Error removing background:', error.message);
+        res.json({ success: false, message: error.message || "Failed to remove background" })
     }
 }
 
 export const removeImageObject = async (req, res) => {
     try {
-        const { userId } = req.auth();
+        const { userId } = req.auth;
         const image = req.file;
         const plan = req.plan;
         const { object } = req.body;
@@ -311,17 +292,15 @@ export const removeImageObject = async (req, res) => {
             usageLeft: plan === 'premium' ? 'unlimited' : 5 - newUsage
         })
 
-    }
-
-    catch (error) {
-        console.log(error.message);
-        res.json({ success: false, message: error.message })
+    } catch (error) {
+        console.error('Error removing object:', error.message);
+        res.json({ success: false, message: error.message || "Failed to remove object" })
     }
 }
 
 export const resumeReview = async (req, res) => {
     try {
-        const { userId } = req.auth();
+        const { userId } = req.auth;
         const resume = req.file;
         const plan = req.plan;
 
@@ -335,24 +314,17 @@ export const resumeReview = async (req, res) => {
         }
 
         if (resume.size > 5 * 1024 * 1024) {
-            return res.json({ success: false, message: "Resume file size exceeds allowed size (5MB).  " })
+            return res.json({ success: false, message: "Resume file size exceeds allowed size (5MB)." })
         }
 
         const dataBuffer = fs.readFileSync(resume.path)
         const pdfData = await pdf(dataBuffer)
 
-        const prompt = `Review the following resume and provide the constructive feedback on its strengths, weeknesses, and areas for improvement . Resume content :\n\n${pdfData.text}`
+        const prompt = `Review the following resume and provide the constructive feedback on its strengths, weeknesses, and areas for improvement . Resume content :\n\n${pdfData.text}`;
 
-
-        const response = await AI.chat.completions.create({
-            model: "gemini-2.0-flash",
-            messages: [{ role: "user", content: prompt, }],
-            temperature: 0.7,
-            max_tokens: 1000,
-        });
-
-        const content = response.choices[0].message.content
-
+        const model = getModel();
+        const result = await generateWithRetry(() => model.generateContent(prompt));
+        const content = result.response.text();
 
         await sql`INSERT into creations (user_id ,prompt , content ,type )
         values(${userId}, 'Review the uploaded Resume', ${content},'resume-review')`;
@@ -373,39 +345,17 @@ export const resumeReview = async (req, res) => {
             usageLeft: plan === 'premium' ? 'unlimited' : 10 - newUsage
         })
 
-    }
+    } catch (error) {
+        console.error('Error in resume review:', error);
+        let message = "Failed to review resume. Please try again.";
 
-    catch (error) {
-        console.log('Error details:', error);
-        console.log('Error message:', error.message);
-        console.log('Error status:', error.status);
-        console.log('Error response:', error.response?.data);
-
-        // Handle rate limit errors
-        if (error.status === 429 ||
-            error.response?.status === 429 ||
-            error.message?.includes('429') ||
-            error.message?.includes('rate limit') ||
-            error.message?.includes('Rate limit')) {
-            return res.json({
-                success: false,
-                message: "API rate limit exceeded. Please wait a moment and try again."
-            })
+        if (error.message?.includes('429') || error.message?.includes('Too Many Requests')) {
+            message = "Server is busy with too many requests. Please try again in a moment.";
+        } else if (error.message?.includes('Quota') || error.message?.includes('RESOURCE_EXHAUSTED')) {
+            message = "API Usage Quota Exceeded. Please try again later or upgrade.";
+        } else if (error.message?.includes('API_KEY_INVALID') || error.status === 400) {
+            message = "Invalid Gemini API Key. Please check your .env file.";
         }
-
-        // Handle quota exceeded errors
-        if (error.message?.includes('quota') ||
-            error.message?.includes('RESOURCE_EXHAUSTED') ||
-            error.response?.data?.error?.message?.includes('quota')) {
-            return res.json({
-                success: false,
-                message: "API quota exceeded. Please try again later or check your API key."
-            })
-        }
-
-        res.json({
-            success: false,
-            message: error.message || error.response?.data?.error?.message || "An error occurred while processing your request."
-        })
+        res.json({ success: false, message });
     }
 }
