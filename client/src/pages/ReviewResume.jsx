@@ -122,7 +122,7 @@ const ReviewResume = () => {
           <div className='flex flex-1 justify-center items-center'>
             <div className='text-sm flex flex-col items-center gap-5 text-gray-400'>
               <FileText className='w-9 h-9' />
-              <p> Upload an image and click "Remove Background" to get started</p>
+              <p> Upload an PDF and click "Review Resume" to get started</p>
             </div>
           </div>
         ) : (
