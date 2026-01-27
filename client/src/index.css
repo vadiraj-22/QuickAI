@@ -15,3 +15,16 @@
 .cl-drawerRoot{
   z-index: 10;
 }
+
+.marquee-inner {
+  animation: marqueeScroll 15s linear infinite;
+}
+
+@keyframes marqueeScroll {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
