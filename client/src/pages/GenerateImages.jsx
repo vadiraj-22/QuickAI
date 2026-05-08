@@ -78,24 +78,31 @@ const GenerateImages = () => {
   const canGenerate = isPremium || usageCount < 5
 
   return (
-    <div className='h-full overflow-y-scroll p-6 flex items-start flex-wrap gap-4 text-slate-700'>
+    <div className='h-full overflow-y-scroll p-6 flex items-start flex-wrap gap-4 bg-[#000000]'>
       {/* left col */}
-      <form onSubmit={onSubmitHandler} className='w-full max-w-lg p-4 bg-white rounded-lg border border-gray-200'>
+      <form onSubmit={onSubmitHandler} className='w-full max-w-lg p-4 rounded-lg border'
+            style={{
+              backgroundColor: 'rgba(255, 255, 255, 0.08)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              border: '1px solid rgba(255, 255, 255, 0.18)',
+              boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)'
+            }}>
         <div className='flex items-center gap-3'>
           <Sparkles className='w-6 text-[#00AD25]' />
-          <h1 className='text-xl font-semibold' >AI image Generator</h1>
+          <h1 className='text-xl font-semibold text-[var(--card-foreground)]' >AI image Generator</h1>
         </div>
         
         {/* Usage indicator */}
-        <div className='mt-4 p-3 bg-gray-50 rounded-lg'>
+        <div className='mt-4 p-3 bg-[var(--muted)] rounded-lg'>
           <div className='flex justify-between items-center text-sm'>
-            <span className='text-gray-600'>Images remaining:</span>
-            <span className={`font-semibold ${isPremium ? 'text-green-600' : 'text-blue-600'}`}>
+            <span className='text-[var(--muted-foreground)]'>Images remaining:</span>
+            <span className={`font-semibold ${isPremium ? 'text-green-500' : 'text-blue-500'}`}>
               {remainingImages}
             </span>
           </div>
           {!isPremium && (
-            <div className='mt-2 w-full bg-gray-200 rounded-full h-2'>
+            <div className='mt-2 w-full bg-[var(--border)] rounded-full h-2'>
               <div 
                 className='bg-blue-600 h-2 rounded-full transition-all duration-300' 
                 style={{ width: `${(usageCount / 5) * 100}%` }}
@@ -104,25 +111,25 @@ const GenerateImages = () => {
           )}
         </div>
 
-        <p className='mt-6 text-sm font-medium'>Describe your Image</p>
+        <p className='mt-6 text-sm font-medium text-[var(--card-foreground)]'>Describe your Image</p>
         <textarea 
           onChange={(e) => setInput(e.target.value)} 
           value={input} 
           rows={4} 
-          className='w-full p-2 px-3 mt-2 outline-none text-sm rounded-md border border-gray-300' 
+          className='w-full p-2 px-3 mt-2 outline-none text-sm rounded-md border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)]' 
           placeholder='Describe what you want to see in Image' 
           required 
           disabled={!canGenerate}
         />
 
-        <p className='mt-4 text-sm font-medium'>Style</p>
+        <p className='mt-4 text-sm font-medium text-[var(--card-foreground)]'>Style</p>
         <div className='mt-3 flex gap-3 flex-wrap sm:max-w-9/11'>
           {
             imageStyle.map((item) => (
               <span 
                 onClick={() => setSelectedStyle(item)} 
                 className={`text-xs px-4 py-1 border rounded-full cursor-pointer ${
-                  selectedStyle === item ? 'bg-green-50 text-green-700' : 'text-gray-500 border-gray-300'
+                  selectedStyle === item ? 'bg-green-600 text-white border-green-600' : 'text-[var(--muted-foreground)] border-[var(--border)]'
                 } ${!canGenerate ? 'opacity-50 cursor-not-allowed' : ''}`} 
                 key={item}
               >
@@ -144,21 +151,22 @@ const GenerateImages = () => {
               disabled={!canGenerate}
             />
 
-            <div className='w-9 h-5 bg-slate-300 rounded-full peer-checked:bg-green-500 transition'></div>
+            <div className='w-9 h-5 bg-[var(--muted)] rounded-full peer-checked:bg-green-500 transition'></div>
 
             <span className='absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition peer-checked:translate-x-4'></span>
           </label>
-          <p className='text-sm'>Make this Image public</p>
+          <p className='text-sm text-[var(--card-foreground)]'>Make this Image public</p>
         </div>
 
 
         <button 
           disabled={loading || !canGenerate} 
-          className={`w-full flex justify-center items-center gap-2 px-5 py-3 mt-6 rounded-lg text-sm ${
+          className={`w-full flex justify-center items-center gap-2 px-5 py-3 mt-6 rounded-lg text-sm font-semibold ${
             canGenerate 
-              ? 'bg-gradient-to-r to-[#00AD25] from-[#04FF50] text-white cursor-pointer' 
-              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              ? 'bg-gradient-to-r from-emerald-800 via-emerald-700 to-emerald-600 hover:from-emerald-700 hover:via-emerald-600 hover:to-emerald-500 text-white cursor-pointer shadow-lg' 
+              : 'bg-[var(--muted)] text-[var(--muted-foreground)] cursor-not-allowed'
           }`}
+          style={canGenerate ? { boxShadow: '0 4px 20px -5px rgba(16, 185, 129, 0.4)' } : {}}
         >
           {loading ? (
             <span className='w-4 h-4 my-1 rounded-full border-2 border-t-transparent animate-spin'></span>
@@ -169,10 +177,10 @@ const GenerateImages = () => {
         </button>
 
         {!isPremium && usageCount >= 5 && (
-          <div className='mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg'>
-            <p className='text-sm text-yellow-800'>
+          <div className='mt-4 p-3 bg-yellow-500/20 border border-yellow-500 rounded-lg'>
+            <p className='text-sm text-[var(--card-foreground)]'>
               You've used all 5 free images! 
-              <a href="/plan" className='text-blue-600 hover:underline ml-1'>
+              <a href="/plan" className='text-blue-500 hover:underline ml-1'>
                 Upgrade to premium for unlimited image generation.
               </a>
             </p>
@@ -182,24 +190,32 @@ const GenerateImages = () => {
       </form>
 
       {/* right col */}
-      <div className='w-full max-w-lg p-4 bg-white rounded-lg  flex flex-col  border border-gray-200 min-h-96'>
+      <div className='w-full max-w-lg p-4 rounded-lg flex flex-col border min-h-96'
+           style={{
+             backgroundColor: 'rgba(255, 255, 255, 0.08)',
+             backdropFilter: 'blur(20px)',
+             WebkitBackdropFilter: 'blur(20px)',
+             border: '1px solid rgba(255, 255, 255, 0.18)',
+             boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)'
+           }}>
         <div className='flex items-center gap-3'>
-          <Image className='w-5 h-5 text-[#8E37EB]' />
-          <h1 className='text-xl font-semibold'>Generated Images</h1>
+          <Image className='w-5 h-5 text-[#00AD25]' />
+          <h1 className='text-xl font-semibold text-[var(--card-foreground)]'>Generated Images</h1>
         </div>
         {
           !content ? (<div className='flex flex-1 justify-center items-center'>
-            <div className='text-sm flex flex-col items-center gap-5 text-gray-400'>
+            <div className='text-sm flex flex-col items-center gap-5 text-[var(--muted-foreground)]'>
               <Image className='w-9 h-9' />
               <p> Enter a topic and click "Generate Image" to get started</p>
             </div>
           </div>)
             : (
               <div className='h-full mt-3'>
-                <img src={content} alt="image" className='w-full h-full' />
+                <img src={content} alt="image" className='w-full h-full rounded-lg' />
                 <button
                   onClick={() => downloadImage(content, 'generated-image.png')}
-                  className="mt-2 w-full px-4 py-2 bg-gradient-to-r to-[#00AD25] from-[#04FF50] text-white rounded"
+                  className="mt-2 w-full px-4 py-2 bg-gradient-to-r from-emerald-800 via-emerald-700 to-emerald-600 hover:from-emerald-700 hover:via-emerald-600 hover:to-emerald-500 text-white font-semibold rounded-lg shadow-lg"
+                  style={{ boxShadow: '0 4px 20px -5px rgba(16, 185, 129, 0.4)' }}
                 >
                   Download Image
                 </button>

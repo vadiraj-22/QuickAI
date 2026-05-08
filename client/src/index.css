@@ -1,8 +1,210 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
 @import "tailwindcss";
+
+:root {
+  --card: #ffffff;
+  --ring: #a5b4fc;
+  --input: #737373;
+  --muted: #f0f0f0;
+  --accent: #f59e0b;
+  --border: #000000;
+  --radius: 1rem;
+  --chart-1: #4f46e5;
+  --chart-2: #14b8a6;
+  --chart-3: #f59e0b;
+  --chart-4: #ec4899;
+  --chart-5: #22c55e;
+  --popover: #ffffff;
+  --primary: #4f46e5;
+  --sidebar: #f7f9f3;
+  --spacing: 0.25rem;
+  --font-mono: Space Mono, monospace;
+  --font-sans: DM Sans, sans-serif;
+  --secondary: #14b8a6;
+  --background: #f7f9f3;
+  --font-serif: DM Sans, sans-serif;
+  --foreground: #000000;
+  --destructive: #ef4444;
+  --shadow-blur: 0px;
+  --shadow-color: #1a1a1a;
+  --sidebar-ring: #a5b4fc;
+  --shadow-spread: 0px;
+  --letter-spacing: normal;
+  --shadow-opacity: 0.05;
+  --sidebar-accent: #f59e0b;
+  --sidebar-border: #000000;
+  --card-foreground: #000000;
+  --shadow-offset-x: 0px;
+  --shadow-offset-y: 0px;
+  --sidebar-primary: #4f46e5;
+  --muted-foreground: #333333;
+  --accent-foreground: #000000;
+  --popover-foreground: #000000;
+  --primary-foreground: #ffffff;
+  --sidebar-foreground: #000000;
+  --secondary-foreground: #ffffff;
+  --destructive-foreground: #ffffff;
+  --sidebar-accent-foreground: #000000;
+  --sidebar-primary-foreground: #ffffff;
+}
+
+.dark {
+  --card: #1a212b;
+  --ring: #818cf8;
+  --input: #ffffff;
+  --muted: #333333;
+  --accent: #fcd34d;
+  --border: #545454;
+  --radius: 1rem;
+  --chart-1: #818cf8;
+  --chart-2: #2dd4bf;
+  --chart-3: #fcd34d;
+  --chart-4: #f472b6;
+  --chart-5: #4ade80;
+  --popover: #1a212b;
+  --primary: #818cf8;
+  --sidebar: #000000;
+  --spacing: 0.25rem;
+  --font-mono: Space Mono, monospace;
+  --font-sans: DM Sans, sans-serif;
+  --secondary: #2dd4bf;
+  --background: #000000;
+  --font-serif: DM Sans, sans-serif;
+  --foreground: #ffffff;
+  --destructive: #f87171;
+  --shadow-blur: 0px;
+  --shadow-color: #1a1a1a;
+  --sidebar-ring: #818cf8;
+  --shadow-spread: 0px;
+  --letter-spacing: normal;
+  --shadow-opacity: 0.05;
+  --sidebar-accent: #fcd34d;
+  --sidebar-border: #ffffff;
+  --card-foreground: #ffffff;
+  --shadow-offset-x: 0px;
+  --shadow-offset-y: 0px;
+  --sidebar-primary: #818cf8;
+  --muted-foreground: #cccccc;
+  --accent-foreground: #000000;
+  --popover-foreground: #ffffff;
+  --primary-foreground: #000000;
+  --sidebar-foreground: #ffffff;
+  --secondary-foreground: #000000;
+  --destructive-foreground: #000000;
+  --sidebar-accent-foreground: #000000;
+  --sidebar-primary-foreground: #000000;
+}
+
+@theme inline {
+  --color-card: var(--card);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-border: var(--border);
+  --color-radius: var(--radius);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-popover: var(--popover);
+  --color-primary: var(--primary);
+  --color-sidebar: var(--sidebar);
+  --color-spacing: var(--spacing);
+  --color-font-mono: var(--font-mono);
+  --color-font-sans: var(--font-sans);
+  --color-secondary: var(--secondary);
+  --color-background: var(--background);
+  --color-font-serif: var(--font-serif);
+  --color-foreground: var(--foreground);
+  --color-destructive: var(--destructive);
+  --color-shadow-blur: var(--shadow-blur);
+  --color-shadow-color: var(--shadow-color);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-shadow-spread: var(--shadow-spread);
+  --color-letter-spacing: var(--letter-spacing);
+  --color-shadow-opacity: var(--shadow-opacity);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-card-foreground: var(--card-foreground);
+  --color-shadow-offset-x: var(--shadow-offset-x);
+  --color-shadow-offset-y: var(--shadow-offset-y);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+}
 
 *{
    font-family: "Outfit", sans-serif;
+}
+
+/* Custom Scrollbar Styling for Dark Theme */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #1a1a1a #000000;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: #000000;
+  border-radius: 10px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: #1a1a1a;
+  border-radius: 10px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #2a2a2a;
+}
+
+/* Specific styling for page content scrollbars */
+.h-full::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.h-full::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.h-full::-webkit-scrollbar-thumb {
+  background: #1a1a1a;
+  border-radius: 10px;
+}
+
+.h-full::-webkit-scrollbar-thumb:hover {
+  background: #2a2a2a;
+}
+
+/* Hide scrollbar for main body but keep functionality */
+body {
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: #1a1a1a #000000;
+}
+
+html {
+  overflow-x: hidden;
+  background: #000000;
+}
+
+body {
+  background: #000000;
 }
 
 @theme{
@@ -27,4 +229,37 @@
   100% {
     transform: translateX(-50%);
   }
+}
+
+@keyframes shine {
+  0% {
+    transform: translateX(-100%);
+  }
+  50%, 100% {
+    transform: translateX(200%);
+  }
+}
+
+/* Additional scrollbar fixes for overflow containers */
+.overflow-y-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.overflow-y-scroll::-webkit-scrollbar-track {
+  background: #000000;
+}
+
+.overflow-y-scroll::-webkit-scrollbar-thumb {
+  background: #1a1a1a;
+  border-radius: 10px;
+}
+
+.overflow-y-scroll::-webkit-scrollbar-thumb:hover {
+  background: #2a2a2a;
+}
+
+/* Firefox scrollbar for overflow containers */
+.overflow-y-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #1a1a1a #000000;
 }

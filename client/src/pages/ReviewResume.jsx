@@ -64,25 +64,32 @@ const ReviewResume = () => {
   const canReview = isPremium || resumeReviewUsage < 10
 
   return (
-    <div className='h-full overflow-y-scroll p-6 flex items-start flex-wrap gap-4 text-slate-700'>
+    <div className='h-full overflow-y-scroll p-6 flex items-start flex-wrap gap-4 bg-[#000000]'>
 
       {/* left col */}
-      <form onSubmit={onSubmitHandler} className='w-full max-w-lg p-4 bg-white rounded-lg border border-gray-200'>
+      <form onSubmit={onSubmitHandler} className='w-full max-w-lg p-4 rounded-lg border'
+            style={{
+              backgroundColor: 'rgba(255, 255, 255, 0.08)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              border: '1px solid rgba(255, 255, 255, 0.18)',
+              boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)'
+            }}>
         <div className='flex items-center gap-3'>
           <Sparkles className='w-6 text-[#00DA83]' />
-          <h1 className='text-xl font-semibold' > Resume Review </h1>
+          <h1 className='text-xl font-semibold text-[var(--card-foreground)]' > Resume Review </h1>
         </div>
 
         {/* Usage Counter */}
-        <div className='mt-4 p-3 bg-gray-50 rounded-lg'>
+        <div className='mt-4 p-3 bg-[var(--muted)] rounded-lg'>
           <div className='flex justify-between items-center mb-2'>
-            <span className='text-sm font-medium text-gray-700'>Free Reviews</span>
+            <span className='text-sm font-medium text-[var(--card-foreground)]'>Free Reviews</span>
             <span className='text-sm font-semibold text-[#00DA83]'>
               {remainingUses} {!isPremium && 'remaining'}
             </span>
           </div>
           {!isPremium && (
-            <div className='w-full bg-gray-200 rounded-full h-2'>
+            <div className='w-full bg-[var(--border)] rounded-full h-2'>
               <div 
                 className='bg-gradient-to-r to-[#00DA83] from-[#009BB3] h-2 rounded-full transition-all duration-300' 
                 style={{ width: `${(resumeReviewUsage / 10) * 100}%` }}
@@ -91,20 +98,20 @@ const ReviewResume = () => {
           )}
         </div>
 
-        <p className='mt-6 text-sm font-medium'>Upload Resume</p>
-        <input onChange={(e) => setInput(e.target.files[0])} type="file" accept='application/pdf' className='w-full p-2 px-3 mt-2 outline-none text-sm  rounded-md border border-gray-300 text-gray-600' required />
+        <p className='mt-6 text-sm font-medium text-[var(--card-foreground)]'>Upload Resume</p>
+        <input onChange={(e) => setInput(e.target.files[0])} type="file" accept='application/pdf' className='w-full p-2 px-3 mt-2 outline-none text-sm rounded-md border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)]' required />
 
-        <p className='text-xs text-gray-500 font-light mt-1 '>Supports PDF Resume only</p>
+        <p className='text-xs text-[var(--muted-foreground)] font-light mt-1 '>Supports PDF Resume only</p>
 
-        <button disabled={loading || !canReview} className='w-full flex justify-center items-center gap-2 bg-gradient-to-r to-[#00DA83] from-[#009BB3] text-white px-5 py-3 mt-6 rounded-lg text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed'>
+        <button disabled={loading || !canReview} className='w-full flex justify-center items-center gap-2 bg-gradient-to-r to-[#00DA83] from-[#009BB3] hover:opacity-90 text-white px-5 py-3 mt-6 rounded-lg text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed'>
 
           {loading ? <span className='w-4 h-4 my-1 rounded-full border-2 border-t-transparent animate-spin'></span> : <FileText className='w-5' />}
           Review Resume
         </button>
 
         {!isPremium && resumeReviewUsage >= 10 && (
-          <div className='mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg'>
-            <p className='text-sm text-yellow-800'>
+          <div className='mt-4 p-3 bg-yellow-500/20 border border-yellow-500 rounded-lg'>
+            <p className='text-sm text-[var(--card-foreground)]'>
               You've used all your free resume reviews. Upgrade to premium for unlimited access!
             </p>
           </div>
@@ -112,21 +119,28 @@ const ReviewResume = () => {
       </form>
 
       {/* right col */}
-      <div className='w-full max-w-lg p-4 bg-white rounded-lg  flex flex-col  border border-gray-200 min-h-96 max-h-[600px]'>
+      <div className='w-full max-w-lg p-4 rounded-lg flex flex-col border min-h-96 max-h-[600px]'
+           style={{
+             backgroundColor: 'rgba(255, 255, 255, 0.08)',
+             backdropFilter: 'blur(20px)',
+             WebkitBackdropFilter: 'blur(20px)',
+             border: '1px solid rgba(255, 255, 255, 0.18)',
+             boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)'
+           }}>
         <div className='flex items-center gap-3'>
           <FileText className='w-5 h-5 text-[#00DA83]' />
-          <h1 className='text-xl font-semibold'>Analysis Results</h1>
+          <h1 className='text-xl font-semibold text-[var(--card-foreground)]'>Analysis Results</h1>
         </div>
 
         {!content ? (
           <div className='flex flex-1 justify-center items-center'>
-            <div className='text-sm flex flex-col items-center gap-5 text-gray-400'>
+            <div className='text-sm flex flex-col items-center gap-5 text-[var(--muted-foreground)]'>
               <FileText className='w-9 h-9' />
               <p> Upload an PDF and click "Review Resume" to get started</p>
             </div>
           </div>
         ) : (
-          <div className='mt-3 h-full overflow-y-scroll text-sm text-slate-600'>
+          <div className='mt-3 h-full overflow-y-scroll text-sm text-[var(--muted-foreground)]'>
             <div className='reset-tw'>
               <Markdown>{content}</Markdown>
             </div>

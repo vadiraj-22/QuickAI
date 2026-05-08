@@ -38,27 +38,34 @@ const BlogTitles = () => {
     setLoading(false)
   }
   return (
-    <div className='h-full overflow-y-scroll p-6 flex items-start flex-wrap gap-4 text-slate-700'>
+    <div className='h-full overflow-y-scroll p-6 flex items-start flex-wrap gap-4 bg-[#000000]'>
       {/* left col */}
-      <form onSubmit={onSubmitHandler} className='w-full max-w-lg p-4 bg-white rounded-lg border border-gray-200'>
+      <form onSubmit={onSubmitHandler} className='w-full max-w-lg p-4 rounded-lg border'
+            style={{
+              backgroundColor: 'rgba(255, 255, 255, 0.08)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              border: '1px solid rgba(255, 255, 255, 0.18)',
+              boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)'
+            }}>
         <div className='flex items-center gap-3'>
           <Sparkles className='w-6 text-[#8E37EB]' />
-          <h1 className='text-xl font-semibold' >AI Title Generator</h1>
+          <h1 className='text-xl font-semibold text-[var(--card-foreground)]' >AI Title Generator</h1>
         </div>
-        <p className='mt-6 text-sm font-medium'>Keyword</p>
-        <input onChange={(e) => setInput(e.target.value)} value={input} type="text" className='w-full p-2 px-3 mt-2 outline-none text-sm  rounded-md border border-gray-300' placeholder='The future of artificial intelligence is...  ' required />
+        <p className='mt-6 text-sm font-medium text-[var(--card-foreground)]'>Keyword</p>
+        <input onChange={(e) => setInput(e.target.value)} value={input} type="text" className='w-full p-2 px-3 mt-2 outline-none text-sm rounded-md border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)]' placeholder='The future of artificial intelligence is...  ' required />
 
-        <p className='mt-4 text-sm font-medium'>Category</p>
+        <p className='mt-4 text-sm font-medium text-[var(--card-foreground)]'>Category</p>
         <div className='mt-3 flex gap-3 flex-wrap sm:max-w-9/11'>
           {
             blogCategories.map((item) => (
-              <span onClick={() => setSelectedCategory(item)} className={`text-xs px-4 py-1 border rounded-full cursor-pointer ${selectedCategory === item ? 'bg-purple-50 text-purple-700' : 'text-gray-500 border-gray-300'}`} key={item}>{item}</span>
+              <span onClick={() => setSelectedCategory(item)} className={`text-xs px-4 py-1 border rounded-full cursor-pointer ${selectedCategory === item ? 'bg-purple-600 text-white border-purple-600' : 'text-[var(--muted-foreground)] border-[var(--border)]'}`} key={item}>{item}</span>
             ))
           }
         </div>
         <br />
 
-        <button disabled={loading} className='w-full flex justify-center items-center gap-2 bg-gradient-to-r to-[#C341F6] from-[#8E37EB] text-white px-5 py-3 mt-6 rounded-lg text-sm cursor-pointer'>
+        <button disabled={loading} className='w-full flex justify-center items-center gap-2 bg-gradient-to-r to-[#C341F6] from-[#8E37EB] hover:opacity-90 text-white px-5 py-3 mt-6 rounded-lg text-sm cursor-pointer'>
           {loading ? <span className='w-4 h-4 my-1 rounded-full border-2 border-t-transparent animate-spin'></span> : <Hash className='w-5' />}
 
           Generate Title
@@ -67,21 +74,28 @@ const BlogTitles = () => {
       </form>
 
       {/* right col */}
-      <div className='w-full max-w-lg p-4 bg-white rounded-lg  flex flex-col  border border-gray-200 min-h-96'>
+      <div className='w-full max-w-lg p-4 rounded-lg flex flex-col border min-h-96'
+           style={{
+             backgroundColor: 'rgba(255, 255, 255, 0.08)',
+             backdropFilter: 'blur(20px)',
+             WebkitBackdropFilter: 'blur(20px)',
+             border: '1px solid rgba(255, 255, 255, 0.18)',
+             boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)'
+           }}>
         <div className='flex items-center gap-3'>
           <Hash className='w-5 h-5 text-[#8E37EB]' />
-          <h1 className='text-xl font-semibold'>Generated Titles</h1>
+          <h1 className='text-xl font-semibold text-[var(--card-foreground)]'>Generated Titles</h1>
         </div>
         {
           !content ? (
             <div className='flex flex-1 justify-center items-center'>
-              <div className='text-sm flex flex-col items-center gap-5 text-gray-400'>
+              <div className='text-sm flex flex-col items-center gap-5 text-[var(--muted-foreground)]'>
                 <Hash className='w-9 h-9' />
                 <p> Enter a topic and click "generate Title" to get started</p>
               </div>
             </div>
           ) : (
-            <div className='mt-3 h-full overflow-y-scroll text-sm text-slate-600'>
+            <div className='mt-3 h-full overflow-y-scroll text-sm text-[var(--muted-foreground)]'>
                     <div className='reset-tw'>
                      <Markdown>{content}</Markdown> 
                     </div>
