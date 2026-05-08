@@ -92,11 +92,11 @@ const Navbar = () => {
             ) : (
               <button 
                 onClick={openSignIn} 
-                className='flex items-center gap-2 rounded-full text-sm font-medium cursor-pointer bg-[var(--primary)] hover:opacity-90 text-[var(--primary-foreground)] px-6 sm:px-8 py-2.5 shadow-lg active:scale-95 transition-all duration-200'
-                style={{ boxShadow: '0 10px 30px -10px var(--primary)' }}
+                className='flex items-center gap-2 rounded-full text-sm font-medium cursor-pointer bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-500 hover:to-amber-600 text-gray-900 px-4 sm:px-8 py-2.5 shadow-lg active:scale-95 transition-all duration-200'
+                style={{ boxShadow: '0 10px 30px -10px rgba(251, 191, 36, 0.6)' }}
               >
-                Get Started 
-                <ArrowRight className='w-4 h-4'/>
+                <span className='whitespace-nowrap'>Get Started</span>
+                <ArrowRight className='w-4 h-4 hidden sm:block'/>
               </button>
             )}
 
