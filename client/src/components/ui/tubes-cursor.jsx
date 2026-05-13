@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 // The main App component that encapsulates the animation
 // In React, component names must start with a capital letter to be recognized as components.
@@ -12,6 +12,8 @@ export default function TubesCursor() {
   const mouseRef = useRef({ x: 0, y: 0 });
   // Track animation time for infinity pattern
   const animationTimeRef = useRef(0);
+  // State to track if device is desktop (disable on mobile/tablet)
+  const [isDesktop, setIsDesktop] = useState(false);
 
   /**
    * Generates an array of random hex color strings.
@@ -24,8 +26,32 @@ export default function TubesCursor() {
     );
   };
 
+  // Check if device is desktop on mount and window resize
+  useEffect(() => {
+    const checkIsDesktop = () => {
+      // Consider desktop as screens wider than 1024px (typical tablet breakpoint)
+      setIsDesktop(window.innerWidth > 1024);
+    };
+
+    // Check on mount
+    checkIsDesktop();
+
+    // Add resize listener
+    window.addEventListener('resize', checkIsDesktop);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('resize', checkIsDesktop);
+    };
+  }, []);
+
   // This effect runs once when the component mounts
   useEffect(() => {
+    // Don't initialize cursor effect on mobile/tablet devices
+    if (!isDesktop) {
+      return;
+    }
+
     // The error "Computed radius is NaN" suggests a race condition where the animation 
     // library initializes before the canvas element has its final dimensions, leading 
     // to invalid geometry calculations. Delaying the initialization with setTimeout 
@@ -134,7 +160,12 @@ export default function TubesCursor() {
         appRef.current.dispose();
       }
     };
-  }, []); // The empty dependency array ensures this effect runs only once
+  }, [isDesktop]); // Re-run effect when isDesktop changes
+
+  // Don't render canvas on mobile/tablet devices
+  if (!isDesktop) {
+    return null;
+  }
 
   return (
     // Canvas element for the animation as background only
