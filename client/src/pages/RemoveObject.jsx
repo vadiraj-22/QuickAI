@@ -19,11 +19,14 @@ async function downloadImage(url, filename = 'object-removed.png') {
 
 axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
 
+const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
+
 const RemoveObject = () => {
-  const [input, setInput] = useState('')
+  const [input, setInput] = useState(null)
   const [object, setObject] = useState('')
   const [loading, setLoading] = useState(false)
   const [content, setContent] = useState('')
+  const [formatError, setFormatError] = useState('')
   const [objRemovalUsage, setObjRemovalUsage] = useState(0)
   const [isPremium, setIsPremium] = useState(false)
   const { getToken } = useAuth()
@@ -51,6 +54,16 @@ const RemoveObject = () => {
   const onSubmitHandler = async (e) => {
     e.preventDefault();
     try {
+      if (!input) {
+        toast.error('Please select an image to upload.');
+        return;
+      }
+      if (!ALLOWED_TYPES.includes(input.type)) {
+        setFormatError(`"${input.name}" is not supported. Please upload a JPG or PNG image.`);
+        toast.error('Invalid file format. Only JPG and PNG are allowed.');
+        return;
+      }
+
       setLoading(true)
 
       if (object.split(' ').length > 1) {
@@ -115,7 +128,36 @@ const RemoveObject = () => {
         </div>
 
         <p className='mt-6 text-sm font-medium text-[var(--card-foreground)]'>Upload Image</p>
-        <input onChange={(e) => setInput(e.target.files[0])} type="file" accept='image/*' className='w-full p-2 px-3 mt-2 outline-none text-sm rounded-md border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)]' required />
+        <input
+          onChange={(e) => {
+            try {
+              const file = e.target.files[0];
+              if (!file) return;
+              if (!ALLOWED_TYPES.includes(file.type)) {
+                setFormatError(`"${file.name}" is not supported. Please upload a JPG or PNG image.`);
+                toast.error('Invalid file format. Only JPG and PNG are allowed.');
+                setInput(null);
+                e.target.value = '';
+                return;
+              }
+              setFormatError('');
+              setInput(file);
+            } catch (error) {
+              toast.error('Failed to read the file. Please try again.');
+              e.target.value = '';
+            }
+          }}
+          type="file"
+          accept="*"
+          className='w-full p-2 px-3 mt-2 outline-none text-sm rounded-md border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)]'
+          required
+        />
+
+        {formatError && (
+          <p className='text-xs text-red-400 font-medium mt-2'>{formatError}</p>
+        )}
+
+        <p className='text-xs text-[var(--muted-foreground)] font-light mt-1'>Supports JPG, JPEG, and PNG formats only</p>
 
         <p className='mt-6 text-sm font-medium text-[var(--card-foreground)]'>Describe object name to remove</p>
         <textarea onChange={(e) => setObject(e.target.value)} value={object} rows={4} className='w-full p-2 px-3 mt-2 outline-none text-sm rounded-md border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)]' placeholder='eg..  watch or spoon only single object name ' required />

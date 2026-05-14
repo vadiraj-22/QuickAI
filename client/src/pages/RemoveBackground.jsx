@@ -19,10 +19,13 @@ async function downloadImage(url, filename = 'image.png') {
 
 axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
 
+const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
+
 const RemoveBackground = () => {
-  const [input, setInput] = useState('')
+  const [input, setInput] = useState(null)
   const [loading, setLoading] = useState(false)
   const [content, setContent] = useState('')
+  const [formatError, setFormatError] = useState('')
   const [bgRemovalUsage, setBgRemovalUsage] = useState(0)
   const [isPremium, setIsPremium] = useState(false)
   const { getToken } = useAuth()
@@ -49,6 +52,15 @@ const RemoveBackground = () => {
   const onSubmitHandler = async (e) => {
     e.preventDefault();
     try {
+      if (!input) {
+        toast.error('Please select an image to upload.');
+        return;
+      }
+      if (!ALLOWED_TYPES.includes(input.type)) {
+        setFormatError(`"${input.name}" is not supported. Please upload a JPG or PNG image.`);
+        toast.error('Invalid file format. Only JPG and PNG are allowed.');
+        return;
+      }
       setLoading(true)
       const formData = new FormData()
       formData.append('image', input)
@@ -106,9 +118,36 @@ const RemoveBackground = () => {
         </div>
 
         <p className='mt-6 text-sm font-medium text-[var(--card-foreground)]'>Upload Image</p>
-        <input onChange={(e) => setInput(e.target.files[0])} type="file" accept='image/*' className='w-full p-2 px-3 mt-2 outline-none text-sm rounded-md border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)]' required />
+        <input
+          onChange={(e) => {
+            try {
+              const file = e.target.files[0];
+              if (!file) return;
+              if (!ALLOWED_TYPES.includes(file.type)) {
+                setFormatError(`"${file.name}" is not supported. Please upload a JPG or PNG image.`);
+                toast.error('Invalid file format. Only JPG and PNG are allowed.');
+                setInput(null);
+                e.target.value = '';
+                return;
+              }
+              setFormatError('');
+              setInput(file);
+            } catch (error) {
+              toast.error('Failed to read the file. Please try again.');
+              e.target.value = '';
+            }
+          }}
+          type="file"
+          accept="*"
+          className='w-full p-2 px-3 mt-2 outline-none text-sm rounded-md border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)]'
+          required
+        />
 
-        <p className='text-xs text-[var(--muted-foreground)] font-light mt-1 '>Supports JPG PNG and Image formats </p>
+        {formatError && (
+          <p className='text-xs text-red-400 font-medium mt-2'>{formatError}</p>
+        )}
+
+        <p className='text-xs text-[var(--muted-foreground)] font-light mt-1'>Supports JPG, JPEG, and PNG formats only</p>
 
         <button disabled={loading || !canRemove} className='w-full flex justify-center items-center gap-2 bg-gradient-to-r to-[#F6AB41] from-[#FF4938] hover:opacity-90 text-white px-5 py-3 mt-6 rounded-lg text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed'>
           {
