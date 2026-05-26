@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import { useAuth } from '@clerk/clerk-react';
 import toast from 'react-hot-toast';
+import LoadingOverlay, { PIPELINE_MESSAGES } from '../components/LoadingOverlay';
 
 async function downloadImage(url, filename = 'image.png') {
   const response = await fetch(url, { mode: 'cors' });
@@ -59,19 +60,20 @@ const GenerateImages = () => {
       const prompt = `Generate an Image of  ${input} in the style ${selectedStyle}`
       const { data } = await axios.post('/api/ai/generate-image', { prompt, publish }, { headers: { Authorization: `Bearer ${await getToken()}` } })
       if (data.success) {
-        setContent(data.content)
         // Update usage count after successful generation
         if (!isPremium) {
           setUsageCount(prev => prev + 1)
         }
-      }
-      else {
+        setContent(data.content)
+        // loading stays true — turns off in img onLoad/onError
+      } else {
         toast.error(data.message)
+        setLoading(false)
       }
     } catch (error) {
       toast.error(error.message)
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   const remainingImages = isPremium ? 'Unlimited' : Math.max(0, 5 - usageCount)
@@ -79,6 +81,7 @@ const GenerateImages = () => {
 
   return (
     <div className='h-full overflow-y-scroll p-6 flex items-start flex-wrap gap-4 bg-[#000000]'>
+      <LoadingOverlay visible={loading} accentColor='#00AD25' messages={PIPELINE_MESSAGES.generateImage} />
       {/* left col */}
       <form onSubmit={onSubmitHandler} className='w-full max-w-lg p-4 rounded-lg border'
             style={{
@@ -211,7 +214,13 @@ const GenerateImages = () => {
           </div>)
             : (
               <div className='h-full mt-3'>
-                <img src={content} alt="image" className='w-full h-full rounded-lg' />
+                <img
+                  src={content}
+                  alt="image"
+                  className='w-full h-full rounded-lg'
+                  onLoad={() => setLoading(false)}
+                  onError={() => setLoading(false)}
+                />
                 <button
                   onClick={() => downloadImage(content, 'generated-image.png')}
                   className="mt-2 w-full px-4 py-2 bg-gradient-to-r from-emerald-800 via-emerald-700 to-emerald-600 hover:from-emerald-700 hover:via-emerald-600 hover:to-emerald-500 text-white font-semibold rounded-lg shadow-lg"

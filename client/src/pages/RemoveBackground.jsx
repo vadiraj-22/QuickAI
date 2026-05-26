@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import { useAuth } from '@clerk/clerk-react';
 import toast from 'react-hot-toast';
+import LoadingOverlay, { PIPELINE_MESSAGES } from '../components/LoadingOverlay';
 
 async function downloadImage(url, filename = 'image.png') {
   const response = await fetch(url, { mode: 'cors' });
@@ -66,25 +67,26 @@ const RemoveBackground = () => {
       formData.append('image', input)
       const { data } = await axios.post('/api/ai/remove-image-background', formData, { headers: { Authorization: `Bearer ${await getToken()}` } })
       if (data.success) {
-        setContent(data.content)
-        // Update usage count after successful removal
         if (!isPremium) {
           setBgRemovalUsage(prev => prev + 1)
         }
-      }
-      else {
+        setContent(data.content)
+        // loading stays true — turns off in img onLoad/onError
+      } else {
         toast.error(data.message)
+        setLoading(false)
       }
     } catch (error) {
       toast.error(error.message)
+      setLoading(false)
     }
-    setLoading(false)
   }
   const remainingUses = isPremium ? 'Unlimited' : Math.max(0, 5 - bgRemovalUsage)
   const canRemove = isPremium || bgRemovalUsage < 5
 
   return (
     <div className='h-full overflow-y-scroll p-6 flex items-start flex-wrap gap-4 bg-[#000000]'>
+      <LoadingOverlay visible={loading} accentColor='#FF4938' messages={PIPELINE_MESSAGES.removeBackground} />
       {/* left col */}
       <form onSubmit={onSubmitHandler} className='w-full max-w-lg p-4 rounded-lg border'
             style={{
@@ -189,7 +191,13 @@ const RemoveBackground = () => {
           </div>
         ) : (
           <div>
-            <img src={content} alt="image" className=' mt-3 w-full h-full rounded-lg' />
+            <img
+              src={content}
+              alt="image"
+              className='mt-3 w-full h-full rounded-lg'
+              onLoad={() => setLoading(false)}
+              onError={() => setLoading(false)}
+            />
             <button
               onClick={async () => await downloadImage(content, 'background-removed.png')}
               className="mt-2 w-full px-4 py-2 bg-gradient-to-r to-[#F6AB41] from-[#FF4938] hover:opacity-90 text-white rounded-lg"

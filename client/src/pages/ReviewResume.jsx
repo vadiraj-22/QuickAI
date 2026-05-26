@@ -4,6 +4,7 @@ import axios from 'axios'
 import { useAuth } from '@clerk/clerk-react';
 import toast from 'react-hot-toast';
 import Markdown from 'react-markdown';
+import LoadingOverlay, { PIPELINE_MESSAGES } from '../components/LoadingOverlay';
 
 
 axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
@@ -46,25 +47,26 @@ const ReviewResume = () => {
       formData.append('resume', input)
       const { data } = await axios.post('/api/ai/resume-review', formData, { headers: { Authorization: `Bearer ${await getToken()}` } })
       if (data.success) {
-        setContent(data.content)
-        // Update usage count after successful review
         if (!isPremium) {
           setResumeReviewUsage(prev => prev + 1)
         }
-      }
-      else {
+        setContent(data.content)
+        setLoading(false)
+      } else {
         toast.error(data.message)
+        setLoading(false)
       }
     } catch (error) {
       toast.error(error.message)
+      setLoading(false)
     }
-    setLoading(false)
   }
   const remainingUses = isPremium ? 'Unlimited' : Math.max(0, 10 - resumeReviewUsage)
   const canReview = isPremium || resumeReviewUsage < 10
 
   return (
     <div className='h-full overflow-y-scroll p-6 flex items-start flex-wrap gap-4 bg-[#000000]'>
+      <LoadingOverlay visible={loading} accentColor='#00DA83' messages={PIPELINE_MESSAGES.reviewResume} />
 
       {/* left col */}
       <form onSubmit={onSubmitHandler} className='w-full max-w-lg p-4 rounded-lg border'

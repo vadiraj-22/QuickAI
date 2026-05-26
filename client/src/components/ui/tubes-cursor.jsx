@@ -84,46 +84,54 @@ export default function TubesCursor() {
 
             // Start infinity pattern animation
             const animateInfinity = () => {
-              animationTimeRef.current += 0.008; // Speed of the infinity movement
+              animationTimeRef.current += 0.006; // Speed of the infinity movement
               const t = animationTimeRef.current;
               
-              // Infinity symbol parametric equations
-              // x(t) = sin(t) creates horizontal movement from -1 to 1
-              // y(t) = sin(t) * cos(t) creates the figure-8 pattern
-              // We scale these to cover full screen dimensions
+              // Lemniscate of Bernoulli (infinity symbol) parametric equations
+              // x(t) = sin(t)          → range [-1, 1]  → full screen width
+              // y(t) = sin(t)*cos(t)*2 → range [-1, 1]  → full screen height
+              const nx = Math.sin(t);
+              const ny = Math.sin(t) * Math.cos(t) * 2;
               
-              const scale = 1.8; // Increase scale to cover more screen area
-              const x = Math.sin(t) * scale;
-              const y = Math.sin(t) * Math.cos(t) * scale;
+              // Map from [-1, 1] to pixel coordinates covering the full screen
+              const px = ((nx + 1) / 2) * window.innerWidth;
+              const py = ((ny + 1) / 2) * window.innerHeight;
               
-              // Update mouse position to follow infinity pattern
-              mouseRef.current = {
-                x: ((x + 1) / 2) * window.innerWidth,
-                y: ((y + 1) / 2) * window.innerHeight
-              };
+              mouseRef.current = { x: px, y: py };
+
+              // Dispatch a real mousemove event on document/window so the library
+              // picks it up natively (canvas has pointer-events-none so we target document)
+              const moveEvent = new MouseEvent('mousemove', {
+                bubbles: true,
+                cancelable: true,
+                clientX: px,
+                clientY: py,
+                screenX: px,
+                screenY: py,
+              });
+              document.dispatchEvent(moveEvent);
+              window.dispatchEvent(moveEvent);
 
               if (appRef.current) {
-                // Try different methods to update position
-                
-                // Method 1: Direct updateMousePosition (normalized coordinates)
+                // Method 1: Direct updateMousePosition (normalized coordinates -1 to 1)
                 if (typeof appRef.current.updateMousePosition === 'function') {
-                  appRef.current.updateMousePosition(x, y);
+                  appRef.current.updateMousePosition(nx, ny);
                 }
                 
                 // Method 2: Set mouse property directly (normalized coordinates)
                 if (appRef.current.mouse) {
-                  appRef.current.mouse.x = x;
-                  appRef.current.mouse.y = y;
+                  appRef.current.mouse.x = nx;
+                  appRef.current.mouse.y = ny;
                 }
                 
                 // Method 3: Update via tubes object (pixel coordinates)
                 if (appRef.current.tubes && appRef.current.tubes.updateMouse) {
-                  appRef.current.tubes.updateMouse(mouseRef.current.x, mouseRef.current.y);
+                  appRef.current.tubes.updateMouse(px, py);
                 }
                 
                 // Method 4: Set target position (pixel coordinates)
                 if (appRef.current.setTarget) {
-                  appRef.current.setTarget(mouseRef.current.x, mouseRef.current.y);
+                  appRef.current.setTarget(px, py);
                 }
               }
               

@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import { useAuth } from '@clerk/clerk-react';
 import toast from 'react-hot-toast';
+import LoadingOverlay, { PIPELINE_MESSAGES } from '../components/LoadingOverlay';
 
 async function downloadImage(url, filename = 'object-removed.png') {
   const response = await fetch(url, { mode: 'cors' });
@@ -67,7 +68,9 @@ const RemoveObject = () => {
       setLoading(true)
 
       if (object.split(' ').length > 1) {
-        return toast('please enter only 1 object name')
+        toast('please enter only 1 object name')
+        setLoading(false)
+        return
       }
 
       const formData = new FormData()
@@ -75,25 +78,26 @@ const RemoveObject = () => {
       formData.append('object', object)
       const { data } = await axios.post('/api/ai/remove-image-object', formData, { headers: { Authorization: `Bearer ${await getToken()}` } })
       if (data.success) {
-        setContent(data.content)
-        // Update usage count after successful removal
         if (!isPremium) {
           setObjRemovalUsage(prev => prev + 1)
         }
-      }
-      else {
+        setContent(data.content)
+        // loading stays true — turns off in img onLoad/onError
+      } else {
         toast.error(data.message)
+        setLoading(false)
       }
     } catch (error) {
       toast.error(error.message)
+      setLoading(false)
     }
-    setLoading(false)
   }
   const remainingUses = isPremium ? 'Unlimited' : Math.max(0, 5 - objRemovalUsage)
   const canRemove = isPremium || objRemovalUsage < 5
 
   return (
     <div className='h-full overflow-y-scroll p-6 flex items-start flex-wrap gap-4 bg-[#000000]'>
+      <LoadingOverlay visible={loading} accentColor='#4A7AFF' messages={PIPELINE_MESSAGES.removeObject} />
 
       {/* left col */}
       <form onSubmit={onSubmitHandler} className='w-full max-w-lg p-4 rounded-lg border'
@@ -199,7 +203,13 @@ const RemoveObject = () => {
         </div>)
           : (
             <div>
-              <img src={content} alt="image" className=' mt-3 w-full h-full rounded-lg' />
+              <img
+                src={content}
+                alt="image"
+                className='mt-3 w-full h-full rounded-lg'
+                onLoad={() => setLoading(false)}
+                onError={() => setLoading(false)}
+              />
               <button
                 onClick={async () => await downloadImage(content, 'object-removed.png')}
                 className="mt-2 w-full px-4 py-2 bg-gradient-to-r to-[#417DF6] from-[#8E37EB] hover:opacity-90 text-white rounded-lg"

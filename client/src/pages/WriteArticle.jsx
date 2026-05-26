@@ -4,6 +4,7 @@ import axios from 'axios'
 import { useAuth } from '@clerk/clerk-react'
 import toast from 'react-hot-toast';
 import Markdown from 'react-markdown';
+import LoadingOverlay, { PIPELINE_MESSAGES } from '../components/LoadingOverlay';
 
 axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
 
@@ -32,18 +33,20 @@ const WriteArticle = () => {
       })
       if (data.success) {
         setContent(data.content)
-      }
-      else {
+        setLoading(false)
+      } else {
         toast.error(data.message)
+        setLoading(false)
       }
     } catch (error) {
       toast.error(error.message)
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   return (
     <div className='h-full overflow-y-scroll p-6 flex items-start flex-wrap gap-4 bg-[#000000]'>
+      <LoadingOverlay visible={loading} accentColor='#4A7AFF' messages={PIPELINE_MESSAGES.writeArticle} />
       {/* left col */}
       <form onSubmit={onSubmitHandler} className='w-full max-w-lg p-4 rounded-lg border'
             style={{

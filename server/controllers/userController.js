@@ -15,7 +15,10 @@ import { clerkClient } from "@clerk/express";
 
   export const  getPublishedCreations = async(req , res)=>{ 
     try {
-        const creations = await sql`SELECT * FROM creations where publish = true order by created_at DESC`;
+        const creations = 
+        await sql`SELECT * FROM creations 
+              where publish = true 
+              order by created_at DESC`;
         res.json({success: true, creations});
 
     } catch (error) {
@@ -58,7 +61,9 @@ import { clerkClient } from "@clerk/express";
         const {userId}=req.auth()
         const {id} =req.body
 
-        const [creation]= await sql`select * from creations where id = ${id}`
+        const [creation]= 
+        await sql`select * from creations 
+                  where id = ${id}`
 
         if(!creation){
             return res.json({success:false, message:"creation not found"})
@@ -80,7 +85,8 @@ import { clerkClient } from "@clerk/express";
 
         const formattedArray =`{${updatedLikes.join(',')}}`
 
-        await sql`update creations set likes =${formattedArray}::text[] where id=${id}`;
+        await sql`update creations set likes =${formattedArray}::text[] 
+                  where id=${id}`;
 
         res.json({success: true, message});
 

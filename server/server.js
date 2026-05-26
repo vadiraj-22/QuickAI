@@ -56,7 +56,7 @@ const PORT = process.env.PORT || 3000;
 
 // For local development
 app.listen(PORT, () => {
-    console.log('Server is running on port', PORT);
+    console.log('Server is running on port', PORT|| 4000);
 });
 
 // Export for Vercel serverless
