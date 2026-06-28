@@ -1,26 +1,28 @@
-import { Scissors, Sparkles } from 'lucide-react';
+import { Scissors, Sparkles, Upload } from 'lucide-react'
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
-import { useAuth } from '@clerk/clerk-react';
-import toast from 'react-hot-toast';
-import LoadingOverlay, { PIPELINE_MESSAGES } from '../components/LoadingOverlay';
+import { useAuth } from '@clerk/clerk-react'
+import toast from 'react-hot-toast'
+import LoadingOverlay, { PIPELINE_MESSAGES } from '../components/LoadingOverlay'
 
 async function downloadImage(url, filename = 'object-removed.png') {
-  const response = await fetch(url, { mode: 'cors' });
-  const blob = await response.blob();
-  const blobUrl = window.URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = blobUrl;
-  link.setAttribute('download', filename);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  window.URL.revokeObjectURL(blobUrl);
+  const response = await fetch(url, { mode: 'cors' })
+  const blob = await response.blob()
+  const blobUrl = window.URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = blobUrl
+  link.setAttribute('download', filename)
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  window.URL.revokeObjectURL(blobUrl)
 }
 
-axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
+axios.defaults.baseURL = import.meta.env.VITE_BASE_URL
+const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png']
 
-const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
+const ACCENT = '#4A7AFF'
+const ACCENT_GLOW = 'rgba(74,122,255,0.2)'
 
 const RemoveObject = () => {
   const [input, setInput] = useState(null)
@@ -32,11 +34,10 @@ const RemoveObject = () => {
   const [isPremium, setIsPremium] = useState(false)
   const { getToken } = useAuth()
 
-  // Fetch user usage data
   const fetchUsageData = async () => {
     try {
-      const { data } = await axios.get('/api/user/get-usage-data', { 
-        headers: { Authorization: `Bearer ${await getToken()}` } 
+      const { data } = await axios.get('/api/user/get-usage-data', {
+        headers: { Authorization: `Bearer ${await getToken()}` },
       })
       if (data.success) {
         setObjRemovalUsage(data.objRemovalUsage || 0)
@@ -47,42 +48,31 @@ const RemoveObject = () => {
     }
   }
 
-  useEffect(() => {
-    fetchUsageData()
-  }, [])
+  useEffect(() => { fetchUsageData() }, [])
 
-
-  const onSubmitHandler = async (e) => {
-    e.preventDefault();
+  const onSubmitHandler = async e => {
+    e.preventDefault()
+    if (!input) { toast.error('Please select an image.'); return }
+    if (!ALLOWED_TYPES.includes(input.type)) {
+      setFormatError(`"${input.name}" not supported. Use JPG or PNG.`)
+      toast.error('Invalid format.')
+      return
+    }
+    if (object.split(' ').length > 1) {
+      toast('Please enter only 1 object name')
+      return
+    }
     try {
-      if (!input) {
-        toast.error('Please select an image to upload.');
-        return;
-      }
-      if (!ALLOWED_TYPES.includes(input.type)) {
-        setFormatError(`"${input.name}" is not supported. Please upload a JPG or PNG image.`);
-        toast.error('Invalid file format. Only JPG and PNG are allowed.');
-        return;
-      }
-
       setLoading(true)
-
-      if (object.split(' ').length > 1) {
-        toast('please enter only 1 object name')
-        setLoading(false)
-        return
-      }
-
       const formData = new FormData()
       formData.append('image', input)
       formData.append('object', object)
-      const { data } = await axios.post('/api/ai/remove-image-object', formData, { headers: { Authorization: `Bearer ${await getToken()}` } })
+      const { data } = await axios.post('/api/ai/remove-image-object', formData, {
+        headers: { Authorization: `Bearer ${await getToken()}` },
+      })
       if (data.success) {
-        if (!isPremium) {
-          setObjRemovalUsage(prev => prev + 1)
-        }
+        if (!isPremium) setObjRemovalUsage(prev => prev + 1)
         setContent(data.content)
-        // loading stays true — turns off in img onLoad/onError
       } else {
         toast.error(data.message)
         setLoading(false)
@@ -92,134 +82,185 @@ const RemoveObject = () => {
       setLoading(false)
     }
   }
+
   const remainingUses = isPremium ? 'Unlimited' : Math.max(0, 5 - objRemovalUsage)
   const canRemove = isPremium || objRemovalUsage < 5
 
+  const panelStyle = {
+    background: 'rgba(255,255,255,0.03)',
+    border: '1px solid rgba(255,255,255,0.08)',
+    backdropFilter: 'blur(20px)',
+  }
+
+  const inputStyle = {
+    background: 'rgba(255,255,255,0.05)',
+    border: '1px solid rgba(255,255,255,0.1)',
+    color: '#fff',
+    outline: 'none',
+    transition: 'border-color 0.2s, box-shadow 0.2s',
+    resize: 'none',
+  }
+
   return (
-    <div className='h-full overflow-y-scroll p-6 flex items-start flex-wrap gap-4 bg-[#000000]'>
-      <LoadingOverlay visible={loading} accentColor='#4A7AFF' messages={PIPELINE_MESSAGES.removeObject} />
+    <div className='h-full overflow-y-auto p-6' style={{ background: '#090912' }}>
+      <LoadingOverlay visible={loading} accentColor={ACCENT} messages={PIPELINE_MESSAGES.removeObject} />
 
-      {/* left col */}
-      <form onSubmit={onSubmitHandler} className='w-full max-w-lg p-4 rounded-lg border'
-            style={{
-              backgroundColor: 'rgba(255, 255, 255, 0.08)',
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
-              border: '1px solid rgba(255, 255, 255, 0.18)',
-              boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)'
-            }}>
-        <div className='flex items-center gap-3'>
-          <Sparkles className='w-6 text-[#4A7AFF]' />
-          <h1 className='text-xl font-semibold text-[var(--card-foreground)]' >Object Removal</h1>
+      {/* Page header */}
+      <div className='flex items-center gap-3 mb-6'>
+        <div
+          className='w-10 h-10 rounded-2xl flex items-center justify-center shrink-0'
+          style={{ background: `${ACCENT}25`, boxShadow: `0 0 20px ${ACCENT_GLOW}` }}
+        >
+          <Scissors className='w-5 h-5' style={{ color: ACCENT }} />
         </div>
+        <div>
+          <h1 className='text-xl font-bold text-white'>Remove Object</h1>
+          <p className='text-xs text-white/40'>Erase specific objects from any image with AI</p>
+        </div>
+      </div>
 
-        {/* Usage Counter */}
-        <div className='mt-4 p-3 bg-[var(--muted)] rounded-lg'>
-          <div className='flex justify-between items-center mb-2'>
-            <span className='text-sm font-medium text-[var(--card-foreground)]'>Free Uses</span>
-            <span className='text-sm font-semibold text-[#4A7AFF]'>
-              {remainingUses} {!isPremium && 'remaining'}
-            </span>
+      <div className='flex items-start flex-wrap gap-4'>
+        {/* Left — config panel */}
+        <form
+          onSubmit={onSubmitHandler}
+          className='w-full max-w-lg p-5 rounded-2xl flex flex-col gap-5'
+          style={{ ...panelStyle, borderTop: `2px solid ${ACCENT}` }}
+        >
+          <div className='flex items-center gap-2'>
+            <Sparkles className='w-4 h-4' style={{ color: ACCENT }} />
+            <h2 className='text-base font-semibold text-white'>Object Removal</h2>
           </div>
-          {!isPremium && (
-            <div className='w-full bg-[var(--border)] rounded-full h-2'>
-              <div 
-                className='bg-gradient-to-r to-[#417DF6] from-[#8E37EB] h-2 rounded-full transition-all duration-300' 
-                style={{ width: `${(objRemovalUsage / 5) * 100}%` }}
-              ></div>
+
+          {/* Usage bar */}
+          <div className='p-3 rounded-xl' style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
+            <div className='flex justify-between items-center mb-2'>
+              <span className='text-xs text-white/50'>Free uses remaining</span>
+              <span className='text-sm font-semibold' style={{ color: ACCENT }}>{remainingUses}</span>
+            </div>
+            {!isPremium && (
+              <div className='w-full rounded-full h-1.5' style={{ background: 'rgba(255,255,255,0.08)' }}>
+                <div
+                  className='h-1.5 rounded-full transition-all duration-300'
+                  style={{ width: `${(objRemovalUsage / 5) * 100}%`, background: `linear-gradient(90deg, #8E37EB, ${ACCENT})` }}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* File drop zone */}
+          <div>
+            <label className='block text-xs font-medium text-white/50 mb-2 uppercase tracking-wider'>Upload Image</label>
+            <label
+              className='flex flex-col items-center justify-center gap-2 w-full py-8 rounded-xl cursor-pointer transition-all duration-200'
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px dashed rgba(255,255,255,0.15)' }}
+              onMouseEnter={e => e.currentTarget.style.borderColor = `${ACCENT}60`}
+              onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'}
+            >
+              <Upload className='w-6 h-6 text-white/30' />
+              <span className='text-sm text-white/40'>
+                {input ? input.name : 'Click to upload JPG or PNG'}
+              </span>
+              <input
+                type='file'
+                accept='*'
+                className='sr-only'
+                onChange={e => {
+                  const file = e.target.files[0]
+                  if (!file) return
+                  if (!ALLOWED_TYPES.includes(file.type)) {
+                    setFormatError(`"${file.name}" not supported.`)
+                    toast.error('Invalid format.')
+                    setInput(null)
+                    e.target.value = ''
+                    return
+                  }
+                  setFormatError('')
+                  setInput(file)
+                }}
+              />
+            </label>
+            {formatError && <p className='text-xs text-red-400 mt-2'>{formatError}</p>}
+            <p className='text-xs text-white/25 mt-1'>Supports JPG, JPEG, PNG</p>
+          </div>
+
+          {/* Object name input */}
+          <div>
+            <label className='block text-xs font-medium text-white/50 mb-2 uppercase tracking-wider'>Object to Remove</label>
+            <textarea
+              value={object}
+              onChange={e => setObject(e.target.value)}
+              rows={3}
+              placeholder='e.g. watch, bottle, person (single word only)'
+              required
+              className='w-full px-3 py-2.5 rounded-xl text-sm placeholder-white/20'
+              style={inputStyle}
+              onFocus={e => {
+                e.target.style.borderColor = `${ACCENT}80`
+                e.target.style.boxShadow = `0 0 0 3px ${ACCENT_GLOW}`
+              }}
+              onBlur={e => {
+                e.target.style.borderColor = 'rgba(255,255,255,0.1)'
+                e.target.style.boxShadow = 'none'
+              }}
+            />
+          </div>
+
+          <button
+            disabled={loading || !canRemove}
+            className='w-full flex justify-center items-center gap-2 py-3 rounded-xl text-sm font-semibold text-white transition-opacity disabled:opacity-50'
+            style={{ background: `linear-gradient(135deg, #8E37EB, ${ACCENT})`, boxShadow: `0 4px 20px ${ACCENT_GLOW}` }}
+          >
+            {loading
+              ? <span className='w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin' />
+              : <Scissors className='w-4 h-4' />
+            }
+            Remove Object
+          </button>
+
+          {!isPremium && objRemovalUsage >= 5 && (
+            <div className='p-3 rounded-xl text-sm' style={{ background: 'rgba(234,179,8,0.08)', border: '1px solid rgba(234,179,8,0.3)' }}>
+              <p className='text-amber-300/80'>
+                You've used all free object removals.{' '}
+                <a href='/plan' className='text-amber-400 hover:underline'>Upgrade to Premium</a>
+              </p>
             </div>
           )}
-        </div>
+        </form>
 
-        <p className='mt-6 text-sm font-medium text-[var(--card-foreground)]'>Upload Image</p>
-        <input
-          onChange={(e) => {
-            try {
-              const file = e.target.files[0];
-              if (!file) return;
-              if (!ALLOWED_TYPES.includes(file.type)) {
-                setFormatError(`"${file.name}" is not supported. Please upload a JPG or PNG image.`);
-                toast.error('Invalid file format. Only JPG and PNG are allowed.');
-                setInput(null);
-                e.target.value = '';
-                return;
-              }
-              setFormatError('');
-              setInput(file);
-            } catch (error) {
-              toast.error('Failed to read the file. Please try again.');
-              e.target.value = '';
-            }
-          }}
-          type="file"
-          accept="*"
-          className='w-full p-2 px-3 mt-2 outline-none text-sm rounded-md border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)]'
-          required
-        />
-
-        {formatError && (
-          <p className='text-xs text-red-400 font-medium mt-2'>{formatError}</p>
-        )}
-
-        <p className='text-xs text-[var(--muted-foreground)] font-light mt-1'>Supports JPG, JPEG, and PNG formats only</p>
-
-        <p className='mt-6 text-sm font-medium text-[var(--card-foreground)]'>Describe object name to remove</p>
-        <textarea onChange={(e) => setObject(e.target.value)} value={object} rows={4} className='w-full p-2 px-3 mt-2 outline-none text-sm rounded-md border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)]' placeholder='eg..  watch or spoon only single object name ' required />
-
-
-        <button disabled={loading || !canRemove} className='w-full flex justify-center items-center gap-2 bg-gradient-to-r to-[#417DF6] from-[#8E37EB] hover:opacity-90 text-white px-5 py-3 mt-6 rounded-lg text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed'>
-          {loading ? <span className='w-4 h-4 my-1 rounded-full border-2 border-t-transparent animate-spin'></span> : <Scissors className='w-5' />}
-
-          Remove Object
-        </button>
-
-        {!isPremium && objRemovalUsage >= 5 && (
-          <div className='mt-4 p-3 bg-yellow-500/20 border border-yellow-500 rounded-lg'>
-            <p className='text-sm text-[var(--card-foreground)]'>
-              You've used all your free object removals. Upgrade to premium for unlimited access!
-            </p>
+        {/* Right — output panel */}
+        <div
+          className='w-full max-w-lg p-5 rounded-2xl flex flex-col min-h-96'
+          style={panelStyle}
+        >
+          <div className='flex items-center gap-2 mb-4'>
+            <Scissors className='w-4 h-4' style={{ color: ACCENT }} />
+            <h2 className='text-base font-semibold text-white'>Processed Image</h2>
           </div>
-        )}
-      </form>
 
-      {/* right col */}
-      <div className='w-full max-w-lg p-4 rounded-lg flex flex-col border min-h-96'
-           style={{
-             backgroundColor: 'rgba(255, 255, 255, 0.08)',
-             backdropFilter: 'blur(20px)',
-             WebkitBackdropFilter: 'blur(20px)',
-             border: '1px solid rgba(255, 255, 255, 0.18)',
-             boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)'
-           }}>
-        <div className='flex items-center gap-3'>
-          <Scissors className='w-5 h-5 text-[#4A7AFF]' />
-          <h1 className='text-xl font-semibold text-[var(--card-foreground)]'>Processed Image</h1>
-        </div>
-        {!content ? (<div className='flex flex-1 justify-center items-center'>
-          <div className='text-sm flex flex-col items-center gap-5 text-[var(--muted-foreground)]'>
-            <Scissors className='w-9 h-9' />
-            <p> Upload an image and click "Remove Object" to get started</p>
-          </div>
-        </div>)
-          : (
-            <div>
+          {!content ? (
+            <div className='flex-1 flex flex-col items-center justify-center gap-3 text-white/20'>
+              <Scissors className='w-10 h-10' />
+              <p className='text-sm text-center'>Upload an image and click "Remove Object" to get started</p>
+            </div>
+          ) : (
+            <div className='flex-1 flex flex-col gap-3'>
               <img
                 src={content}
-                alt="image"
-                className='mt-3 w-full h-full rounded-lg'
+                alt='processed'
+                className='w-full rounded-xl object-contain'
                 onLoad={() => setLoading(false)}
                 onError={() => setLoading(false)}
               />
               <button
-                onClick={async () => await downloadImage(content, 'object-removed.png')}
-                className="mt-2 w-full px-4 py-2 bg-gradient-to-r to-[#417DF6] from-[#8E37EB] hover:opacity-90 text-white rounded-lg"
+                onClick={() => downloadImage(content, 'object-removed.png')}
+                className='w-full py-2.5 rounded-xl text-sm font-semibold text-white hover:opacity-90 transition-opacity'
+                style={{ background: `linear-gradient(135deg, #8E37EB, ${ACCENT})`, boxShadow: `0 4px 20px ${ACCENT_GLOW}` }}
               >
                 Download Image
               </button>
             </div>
-          )
-        }
-
+          )}
+        </div>
       </div>
     </div>
   )

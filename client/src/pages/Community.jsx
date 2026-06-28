@@ -1,85 +1,136 @@
 import { useEffect, useState } from 'react'
-import {useUser} from '@clerk/clerk-react'
-import {dummyPublishedCreationData} from '../assets/assets'
-import { Heart } from 'lucide-react'
+import { useUser, useAuth } from '@clerk/clerk-react'
+import { Heart, ImageIcon, Users } from 'lucide-react'
 import axios from 'axios'
-import { useAuth } from '@clerk/clerk-react';
-import toast from 'react-hot-toast';
+import toast from 'react-hot-toast'
 
-axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
+axios.defaults.baseURL = import.meta.env.VITE_BASE_URL
 
 const Community = () => {
-
-  const [creations,setCreations] = useState([])
-  const {user}  = useUser()
-  const [loading, setLoading] = useState(false)
+  const [creations, setCreations] = useState([])
+  const { user } = useUser()
+  const [loading, setLoading] = useState(true)
   const { getToken } = useAuth()
 
-
-  const fetchCreations = async()=>{
+  const fetchCreations = async () => {
     try {
-      const {data} = await axios.get('/api/user/get-published-creations',{headers: {Authorization:`Bearer ${await getToken()}`}})
-
-      if(data.success){
+      const { data } = await axios.get('/api/user/get-published-creations', {
+        headers: { Authorization: `Bearer ${await getToken()}` },
+      })
+      if (data.success) {
         setCreations(data.creations)
-      }
-      else{
+      } else {
         toast.error(data.message)
       }
     } catch (error) {
-        toast.error(error.message)
+      toast.error(error.message)
     }
     setLoading(false)
   }
 
-  const  imageLikeToggle = async (id)=>{ 
+  const imageLikeToggle = async id => {
     try {
-      const {data} = await axios.post('/api/user/toggle-like-creations',{id},{headers: {Authorization:`Bearer ${await getToken()}`}})
+      const { data } = await axios.post('/api/user/toggle-like-creations', { id }, {
+        headers: { Authorization: `Bearer ${await getToken()}` },
+      })
       if (data.success) {
         toast.success(data.message)
         await fetchCreations()
-      }
-      else{
+      } else {
         toast.error(data.message)
       }
     } catch (error) {
-        toast.error(error.message)
+      toast.error(error.message)
     }
   }
 
- useEffect(()=>{
-  if(user){
-    fetchCreations()
+  useEffect(() => {
+    if (user) fetchCreations()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user])
+
+  if (loading) {
+    return (
+      <div className='h-full flex items-center justify-center' style={{ background: '#090912' }}>
+        <div
+          className='w-10 h-10 rounded-full border-2 border-t-transparent animate-spin'
+          style={{ borderColor: 'rgba(244,114,182,0.4)', borderTopColor: 'transparent' }}
+        />
+      </div>
+    )
   }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
- },[user])
-  
 
-  return !loading ? (
-    <div className='flex-1 h-full flex flex-col gap-4 p-6 bg-[#000000]'>
-      <h2 className='text-2xl font-semibold text-[var(--foreground)]'>Community Creations</h2>
-      <div className='bg-[#0a0a0a] h-full w-full rounded-xl overflow-y-scroll border border-[var(--border)]' style={{
-        scrollbarWidth: 'thin',
-        scrollbarColor: '#1a1a1a #0a0a0a'
-      }}>
-        {creations.map((creation,index)=>( 
-          <div key={index} className='relative group inline-block pl-3 pt-3 w-full sm:max-w-1/2 lg:max-w-1/3'>
-            <img src={creation.content} alt="" className='w-full h-full object-cover rounded-lg'/>
+  return (
+    <div className='h-full overflow-y-auto p-6' style={{ background: '#090912' }}>
 
-            <div className='absolute bottom-0 top-0 right-0 left-3 flex gap-2 items-end justify-end group-hover:justify-between p-3 group-hover:bg-gradient-to-b from-transparent to-black/80 text-white rounded-lg '>
-              <p className='text-sm hidden group-hover:block'>{creation.prompt}</p>
-              <div className='flex gap-1 items-center'>
-                <p>{creation.likes.length}</p>
-                <Heart onClick={()=>imageLikeToggle(creation.id)} className={`min-w-5 h-5 hover:scale-110 cursor-pointer ${creation.likes.includes(user.id)? 'fill-red-500 text-red-600':'text-white'}`}/>
+      {/* Page header */}
+      <div className='flex items-center gap-3 mb-6'>
+        <div
+          className='w-10 h-10 rounded-2xl flex items-center justify-center shrink-0'
+          style={{ background: 'rgba(244,114,182,0.15)', boxShadow: '0 0 20px rgba(244,114,182,0.15)' }}
+        >
+          <Users className='w-5 h-5 text-pink-400' />
+        </div>
+        <div>
+          <h1 className='text-xl font-bold text-white'>Community</h1>
+          <p className='text-xs text-white/40'>
+            Explore and like images created by the community
+          </p>
+        </div>
+      </div>
+
+      {creations.length === 0 ? (
+        <div
+          className='flex flex-col items-center justify-center py-24 rounded-2xl'
+          style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}
+        >
+          <ImageIcon className='w-12 h-12 text-white/15 mb-4' />
+          <p className='text-white/30 text-sm'>No community images yet. Be the first to publish!</p>
+        </div>
+      ) : (
+        /* Masonry-style grid */
+        <div className='columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 space-y-4'>
+          {creations.map((creation, index) => (
+            <div
+              key={index}
+              className='break-inside-avoid group relative rounded-2xl overflow-hidden'
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
+            >
+              <img
+                src={creation.content}
+                alt={creation.prompt}
+                className='w-full h-auto block'
+                loading='lazy'
+              />
+
+              {/* Hover overlay */}
+              <div className='absolute inset-0 flex flex-col justify-end p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200' style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 60%)' }}>
+                <p className='text-xs text-white/80 line-clamp-2 mb-2 leading-relaxed'>
+                  {creation.prompt}
+                </p>
+                <div className='flex items-center justify-end gap-1.5'>
+                  <span className='text-sm font-semibold text-white'>
+                    {creation.likes.length}
+                  </span>
+                  <button
+                    onClick={() => imageLikeToggle(creation.id)}
+                    className='flex items-center transition-transform hover:scale-110 active:scale-95'
+                  >
+                    <Heart
+                      className='w-5 h-5 transition-colors'
+                      style={
+                        creation.likes.includes(user?.id)
+                          ? { fill: '#f43f5e', color: '#f43f5e' }
+                          : { fill: 'transparent', color: 'rgba(255,255,255,0.7)' }
+                      }
+                    />
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  ) : (
-    <div className='flex justify-center items-center h-full'>
-      <span className='w-10 h-10 my-1 rounded-full border-3 border-[var(--primary)] border-t-transparent animate-spin'></span>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

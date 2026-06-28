@@ -1,14 +1,35 @@
 import React, { useEffect, useState } from 'react'
 import { dummyCreationData } from '../assets/assets'
-import { Gem, Sparkles } from 'lucide-react'
+import { Gem, Sparkles, TrendingUp, Zap } from 'lucide-react'
 import { Protect } from '@clerk/clerk-react'
 import CreationItem from '../components/CreationItem'
 import axios from 'axios'
-import { useAuth } from '@clerk/clerk-react';
-import toast from 'react-hot-toast';
+import { useAuth } from '@clerk/clerk-react'
+import toast from 'react-hot-toast'
 
-axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
+axios.defaults.baseURL = import.meta.env.VITE_BASE_URL
 
+const StatCard = ({ label, value, icon: Icon, gradient, glow }) => (
+  <div
+    className='flex items-center justify-between p-5 rounded-2xl min-w-52 flex-1'
+    style={{
+      background: 'rgba(255,255,255,0.04)',
+      border: '1px solid rgba(255,255,255,0.08)',
+      backdropFilter: 'blur(20px)',
+    }}
+  >
+    <div>
+      <p className='text-xs font-medium text-white/40 uppercase tracking-wider mb-1'>{label}</p>
+      <h2 className='text-3xl font-bold text-white'>{value}</h2>
+    </div>
+    <div
+      className={`w-12 h-12 rounded-2xl flex items-center justify-center bg-gradient-to-br ${gradient}`}
+      style={{ boxShadow: `0 0 20px ${glow}` }}
+    >
+      <Icon className='w-5 h-5 text-white' />
+    </div>
+  </div>
+)
 
 const Dashboard = () => {
   const [creations, setCreations] = useState([])
@@ -17,12 +38,12 @@ const Dashboard = () => {
 
   const getDashboardData = async () => {
     try {
-      const { data } = await axios.get('/api/user/get-user-creations',{ headers: { Authorization: `Bearer ${await getToken()}` } })
-
+      const { data } = await axios.get('/api/user/get-user-creations', {
+        headers: { Authorization: `Bearer ${await getToken()}` },
+      })
       if (data.success) {
         setCreations(data.creations)
-      }
-      else {
+      } else {
         toast.error(data.message)
       }
     } catch (error) {
@@ -36,71 +57,65 @@ const Dashboard = () => {
   }, [])
 
   return (
-    <div className='h-full overflow-y-scroll p-6 bg-[#000000]'>
-      <div className='flex justify-start gap-4 flex-wrap'>
-        {/* total creation card */}
-        <div className='flex justify-between items-center w-72 p-4 px-6 rounded-xl border'
-             style={{
-               backgroundColor: 'rgba(255, 255, 255, 0.08)',
-               backdropFilter: 'blur(20px)',
-               WebkitBackdropFilter: 'blur(20px)',
-               border: '1px solid rgba(255, 255, 255, 0.18)',
-               boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)'
-             }}>
-          <div className='text-gray-300'>
-            <p className='text-sm'>Total Creations</p>
-            <h2 className='text-xl font-semibold text-gray-100'>{creations.length}</h2>
-          </div>
-          <div className='w-10 h-10 rounded-lg bg-gradient-to-br from-[#3588F2] to-[#0BB0D7] text-white flex justify-center items-center' >
-            <Sparkles className='w-5 text-white' />
-          </div>
-        </div>
+    <div className='h-full overflow-y-auto p-6' style={{ background: '#090912' }}>
 
-        {/* Active plan card */}
-        <div className='flex justify-between items-center w-72 p-4 px-6 rounded-xl border'
-             style={{
-               backgroundColor: 'rgba(255, 255, 255, 0.08)',
-               backdropFilter: 'blur(20px)',
-               WebkitBackdropFilter: 'blur(20px)',
-               border: '1px solid rgba(255, 255, 255, 0.18)',
-               boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)'
-             }}>
-          <div className='text-gray-300'>
-            <p className='text-sm'>Active plan</p>
-            <h2 className='text-xl font-semibold text-gray-100'>
-              <Protect plan='premium' fallback="Free" >
-                Premium
-              </Protect>
-            </h2>
-          </div>
-          <div className='w-10 h-10 rounded-lg bg-gradient-to-br from-[#FF61C5] to-[#9E53EE] text-white flex justify-center items-center' >
-            <Gem className='w-5 text-white' />
-          </div>
-        </div>
-
+      {/* Page header */}
+      <div className='mb-6'>
+        <h1 className='text-2xl font-bold text-white'>Dashboard</h1>
+        <p className='text-sm text-white/40 mt-0.5'>Track your creations and account status</p>
       </div>
 
-      {
-        loading ?
-          (
-            <div className='flex justify-center items-center h-3/4'>
-              <div className='animate-spin rounded-full h-11 w-11 border-3 border-purple-500 border-t-transparent'></div>
-            </div>
-          )
-            :
-            (
-              <div className='space-y-3'>
-        <p className='mt-6 mb-4 text-gray-300'>Recent Creation</p>
-        {
-    creations.map((item) => <CreationItem key={item.id} item={item} />)
-  }
-      </div >
-      )
+      {/* Stat cards */}
+      <div className='flex flex-wrap gap-4 mb-8'>
+        <StatCard
+          label='Total Creations'
+          value={creations.length}
+          icon={Sparkles}
+          gradient='from-[#3C81F6] to-[#0BB0D7]'
+          glow='rgba(60,129,246,0.4)'
+        />
+        <StatCard
+          label='Active Plan'
+          value={
+            <Protect plan='premium' fallback='Free'>
+              Premium
+            </Protect>
+          }
+          icon={Gem}
+          gradient='from-[#FF61C5] to-[#9E53EE]'
+          glow='rgba(255,97,197,0.4)'
+        />
+      </div>
 
-    }
-
-      
-    </div >
+      {/* Creations list */}
+      {loading ? (
+        <div className='flex justify-center items-center h-48'>
+          <div
+            className='w-10 h-10 rounded-full border-2 border-t-transparent animate-spin'
+            style={{ borderColor: 'rgba(129,140,248,0.5)', borderTopColor: 'transparent' }}
+          />
+        </div>
+      ) : (
+        <div>
+          <p className='text-xs font-semibold text-white/30 uppercase tracking-widest mb-4'>
+            Recent Creations
+          </p>
+          <div className='flex flex-col gap-3'>
+            {creations.length === 0 ? (
+              <div
+                className='flex flex-col items-center justify-center py-16 rounded-2xl'
+                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+              >
+                <Sparkles className='w-10 h-10 text-white/15 mb-3' />
+                <p className='text-white/30 text-sm'>No creations yet. Start creating!</p>
+              </div>
+            ) : (
+              creations.map(item => <CreationItem key={item.id} item={item} />)
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
 
