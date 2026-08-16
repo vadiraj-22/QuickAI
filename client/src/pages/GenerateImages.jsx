@@ -91,11 +91,11 @@ const GenerateImages = () => {
   }
 
   return (
-    <div className='h-full overflow-y-auto p-6' style={{ background: '#090912' }}>
+    <div className='h-full flex flex-col p-6 overflow-hidden' style={{ background: '#090912' }}>
       <LoadingOverlay visible={loading} accentColor={ACCENT} messages={PIPELINE_MESSAGES.generateImage} />
 
       {/* Page header */}
-      <div className='flex items-center gap-3 mb-6'>
+      <div className='flex items-center gap-3 mb-6 shrink-0'>
         <div
           className='w-10 h-10 rounded-2xl flex items-center justify-center shrink-0'
           style={{ background: `${ACCENT}25`, boxShadow: `0 0 20px ${ACCENT_GLOW}` }}
@@ -108,11 +108,11 @@ const GenerateImages = () => {
         </div>
       </div>
 
-      <div className='flex items-start flex-wrap gap-4'>
+      <div className='flex-1 flex flex-col lg:flex-row items-stretch gap-6 min-h-0 overflow-y-auto lg:overflow-hidden'>
         {/* Left — config panel */}
         <form
           onSubmit={onSubmitHandler}
-          className='w-full max-w-lg p-5 rounded-2xl flex flex-col gap-5'
+          className='w-full lg:w-1/2 max-w-xl p-5 rounded-2xl flex flex-col gap-5 shrink-0 lg:shrink overflow-y-auto'
           style={{ ...panelStyle, borderTop: `2px solid ${ACCENT}` }}
         >
           <div className='flex items-center gap-2'>
@@ -227,10 +227,10 @@ const GenerateImages = () => {
 
         {/* Right — output panel */}
         <div
-          className='w-full max-w-lg p-5 rounded-2xl flex flex-col min-h-96'
+          className='w-full lg:w-1/2 max-w-xl p-5 rounded-2xl flex flex-col min-h-[300px] lg:min-h-0 flex-1 min-w-0'
           style={panelStyle}
         >
-          <div className='flex items-center gap-2 mb-4'>
+          <div className='flex items-center gap-2 mb-4 shrink-0'>
             <Image className='w-4 h-4' style={{ color: ACCENT }} />
             <h2 className='text-base font-semibold text-white'>Generated Image</h2>
           </div>
@@ -241,7 +241,7 @@ const GenerateImages = () => {
               <p className='text-sm text-center'>Enter a description and click "Generate Image" to get started</p>
             </div>
           ) : (
-            <div className='flex-1 flex flex-col gap-3'>
+            <div className='flex-1 flex flex-col gap-3 overflow-y-auto pr-2'>
               <img
                 src={content}
                 alt='generated'
@@ -251,7 +251,7 @@ const GenerateImages = () => {
               />
               <button
                 onClick={() => downloadImage(content, 'generated-image.png')}
-                className='w-full py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90'
+                className='w-full py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 mt-auto'
                 style={{ background: 'linear-gradient(135deg, #00AD25, #4ade80)', boxShadow: `0 4px 20px ${ACCENT_GLOW}` }}
               >
                 Download Image

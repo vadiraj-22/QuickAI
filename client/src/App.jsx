@@ -18,7 +18,7 @@ import { Toaster} from 'react-hot-toast'
 const App = () => {
 
   return (
-    <div>
+    <div className='h-screen overflow-hidden bg-[#090912]'>
       <Toaster />
       <Routes>
         <Route path='/' element={<Home/>}/>

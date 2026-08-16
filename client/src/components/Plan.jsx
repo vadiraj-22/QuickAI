@@ -1,11 +1,48 @@
-import { useUser, useClerk } from '@clerk/clerk-react'
-import { Check, Star, ArrowRight, UserCheck } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { useUser, useClerk, useAuth } from '@clerk/clerk-react'
+import { Check, Star, ArrowRight, UserCheck, Loader2 } from 'lucide-react'
+import axios from 'axios'
+import toast from 'react-hot-toast'
+
+axios.defaults.baseURL = import.meta.env.VITE_BASE_URL
 
 const Plan = () => {
   const { isSignedIn, user } = useUser()
-  const { openSignIn, openUserProfile } = useClerk()
+  const { openSignIn } = useClerk()
+  const { getToken } = useAuth()
+  const [loadingPlan, setLoadingPlan] = useState(null)
+  const [isBackendPremium, setIsBackendPremium] = useState(false)
 
-  const userPlan = user?.publicMetadata?.plan || 'free'
+  const fetchPlanStatus = async () => {
+    if (!isSignedIn) return
+    try {
+      const token = await getToken()
+      const { data } = await axios.get('/api/user/get-usage-data', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      if (data.success && data.isPremium) {
+        setIsBackendPremium(true)
+      }
+    } catch (err) {
+      console.error('Error fetching plan status:', err)
+    }
+  }
+
+  useEffect(() => {
+    fetchPlanStatus()
+  }, [isSignedIn, user])
+
+  const userPlan = (user?.publicMetadata?.plan === 'premium' || user?.unsafeMetadata?.plan === 'premium' || isBackendPremium) ? 'premium' : 'free'
+
+  const getCtaText = (planId) => {
+    if (!isSignedIn) {
+      return planId === 'free' ? 'Get Started Free' : 'Upgrade to Premium'
+    }
+    if (userPlan === planId) {
+      return 'Current Plan'
+    }
+    return planId === 'free' ? 'Downgrade to Free' : 'Upgrade to Premium'
+  }
 
   const plans = [
     {
@@ -18,7 +55,7 @@ const Plan = () => {
         'Blog Title & Article Writer',
       ],
       popular: false,
-      cta: isSignedIn && userPlan === 'free' ? 'Current Plan' : 'Get Started Free',
+      cta: getCtaText('free'),
     },
     {
       id: 'premium',
@@ -34,15 +71,44 @@ const Plan = () => {
         'AI Resume Reviewer & ATS Analysis',
       ],
       popular: true,
-      cta: isSignedIn ? (userPlan === 'premium' ? 'Current Plan' : 'Upgrade to Premium') : 'Upgrade to Premium',
+      cta: getCtaText('premium'),
     },
   ]
 
-  const handlePlanAction = () => {
+  const handlePlanAction = async (planId) => {
     if (!isSignedIn) {
       openSignIn()
-    } else {
-      openUserProfile()
+      return
+    }
+
+    if (userPlan === planId) return
+
+    try {
+      setLoadingPlan(planId)
+      const token = await getToken()
+      const { data } = await axios.post('/api/user/update-plan', { plan: planId }, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+
+      if (data.success) {
+        toast.success(data.message || `Successfully updated plan!`)
+        if (planId === 'premium') {
+          setIsBackendPremium(true)
+        } else {
+          setIsBackendPremium(false)
+        }
+        if (user?.reload) {
+          await user.reload()
+        }
+        window.location.reload()
+      } else {
+        toast.error(data.message || 'Failed to update plan')
+      }
+    } catch (error) {
+      console.error('Error updating plan:', error)
+      toast.error(error.message || 'An error occurred while updating plan')
+    } finally {
+      setLoadingPlan(null)
     }
   }
 
@@ -62,6 +128,7 @@ const Plan = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
         {plans.map((plan) => {
           const isCurrent = isSignedIn && userPlan === plan.id
+          const isActionLoading = loadingPlan === plan.id
 
           return (
             <div
@@ -101,8 +168,8 @@ const Plan = () => {
 
               <div className="pt-8">
                 <button
-                  onClick={handlePlanAction}
-                  disabled={isCurrent}
+                  onClick={() => handlePlanAction(plan.id)}
+                  disabled={isCurrent || isActionLoading}
                   className={`w-full py-3.5 px-4 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
                     isCurrent
                       ? 'bg-white/10 text-gray-400 cursor-not-allowed border border-white/10'
@@ -111,7 +178,12 @@ const Plan = () => {
                       : 'bg-white/10 hover:bg-white/20 text-white border border-white/10'
                   }`}
                 >
-                  {isCurrent ? (
+                  {isActionLoading ? (
+                    <>
+                      <Loader2 className="size-4 animate-spin" />
+                      Updating...
+                    </>
+                  ) : isCurrent ? (
                     <>
                       <UserCheck className="size-4 text-emerald-400" />
                       Current Plan

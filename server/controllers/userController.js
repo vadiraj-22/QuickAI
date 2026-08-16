@@ -94,3 +94,28 @@ import { clerkClient } from "@clerk/express";
         res.json({success: false, message:error.message});
     }
  }
+
+export const updateUserPlan = async (req, res) => {
+    try {
+        const { userId } = req.auth();
+        const { plan } = req.body;
+        const targetPlan = plan || 'premium';
+
+        const user = await clerkClient.users.getUser(userId);
+
+        await clerkClient.users.updateUserMetadata(userId, {
+            publicMetadata: {
+                ...user.publicMetadata,
+                plan: targetPlan
+            }
+        });
+
+        res.json({
+            success: true,
+            message: `Successfully updated plan to ${targetPlan === 'premium' ? 'Premium' : 'Free'}!`,
+            plan: targetPlan
+        });
+    } catch (error) {
+        res.json({ success: false, message: error.message });
+    }
+};

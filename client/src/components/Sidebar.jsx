@@ -18,10 +18,13 @@ const Sidebar = ({ sidebar, setSidebar }) => {
   const { user } = useUser()
   const { signOut, openUserProfile } = useClerk()
 
+  const userPlan = user?.publicMetadata?.plan || user?.unsafeMetadata?.plan || 'free'
+  const isPremium = userPlan === 'premium'
+
   return (
     <aside
       className={`
-        w-60 shrink-0 flex flex-col justify-between z-20
+        w-60 shrink-0 flex flex-col justify-between z-20 h-full
         max-sm:fixed max-sm:top-14 max-sm:bottom-0 max-sm:left-0
         transition-transform duration-300 ease-in-out
         ${sidebar ? 'max-sm:translate-x-0' : 'max-sm:-translate-x-full'}
@@ -108,11 +111,11 @@ const Sidebar = ({ sidebar, setSidebar }) => {
 
       {/* User footer */}
       <div
-        className='px-3 py-3 shrink-0'
+        className='p-1.5 shrink-0'
         style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
       >
         <div
-          className='flex items-center justify-between gap-2 p-2 rounded-xl cursor-pointer transition-all duration-200 group'
+          className='flex items-center justify-between gap-2 p-1.5 rounded-xl cursor-pointer transition-all duration-200 group'
           onClick={openUserProfile}
           style={{ border: '1px solid transparent' }}
           onMouseEnter={e => {
@@ -138,10 +141,14 @@ const Sidebar = ({ sidebar, setSidebar }) => {
                 {user.fullName}
               </p>
               <p className='text-[11px] text-white/40 leading-tight flex items-center gap-1'>
-                <Protect plan='premium' fallback={<span>Free Plan</span>}>
-                  <Crown className='w-2.5 h-2.5 text-amber-400' />
-                  <span className='text-amber-400'>Premium</span>
-                </Protect>
+                {isPremium ? (
+                  <>
+                    <Crown className='w-2.5 h-2.5 text-amber-400' />
+                    <span className='text-amber-400 font-semibold'>Premium</span>
+                  </>
+                ) : (
+                  <span>Free Plan</span>
+                )}
               </p>
             </div>
           </div>

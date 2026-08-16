@@ -191,20 +191,15 @@
   background: #2a2a2a;
 }
 
-/* Hide scrollbar for main body but keep functionality */
-body {
-  overflow-x: hidden;
-  scrollbar-width: thin;
-  scrollbar-color: #1a1a1a #000000;
-}
-
-html {
-  overflow-x: hidden;
-  background: #000000;
-}
-
-body {
-  background: #000000;
+html,
+body,
+#root {
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden !important;
+  background: #090912;
+  margin: 0;
+  padding: 0;
 }
 
 @theme{
