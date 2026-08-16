@@ -263,3 +263,90 @@ body {
   scrollbar-width: thin;
   scrollbar-color: #1a1a1a #000000;
 }
+
+/* Force Clerk Pricing Table Action Buttons to have BLACK text */
+.cl-pricingTableCardActionButton,
+.cl-pricingTableCardActionButtonPrimary,
+.cl-pricingTableCardActionButton__primary,
+.cl-pricingTableCardActionButton--primary,
+.cl-formButtonPrimary,
+.cl-button[data-variant="solid"],
+button.cl-pricingTableCardActionButton,
+[class*="cl-pricingTableCardActionButton"],
+[class*="pricingTableCardActionButton"] {
+  color: #000000 !important;
+  font-weight: 700 !important;
+}
+
+.cl-pricingTableCardActionButton *,
+.cl-pricingTableCardActionButtonPrimary *,
+.cl-formButtonPrimary *,
+[class*="cl-pricingTableCardActionButton"] *,
+[class*="pricingTableCardActionButton"] * {
+  color: #000000 !important;
+  font-weight: 700 !important;
+}
+
+/* Hide Clerk's empty internal icon container to remove the extra gap */
+.cl-pricingTableCardFeaturesListItemIcon,
+.cl-pricingTableCardFeatureIcon,
+[class*="cl-pricingTableCardFeaturesListItemIcon"],
+[class*="pricingTableCardFeaturesListItemIcon"],
+[class*="cl-pricingTableCardFeatureIcon"],
+[class*="pricingTableCardFeatureIcon"] {
+  display: none !important;
+}
+
+/* Fix padding and margin for Clerk feature list items & text */
+ul[class*="pricingTableCardFeatures"],
+[class*="pricingTableCardFeaturesList"] {
+  padding-left: 0 !important;
+  margin-left: 0 !important;
+  list-style: none !important;
+}
+
+ul[class*="pricingTableCardFeatures"] > li,
+[class*="pricingTableCardFeaturesList"] > li,
+.cl-pricingTableCardFeaturesListItem {
+  display: flex !important;
+  align-items: center !important;
+  list-style: none !important;
+  gap: 0.4rem !important;
+  margin-bottom: 0.75rem !important;
+  padding-left: 0 !important;
+  margin-left: 0 !important;
+}
+
+ul[class*="pricingTableCardFeatures"] > li > *,
+[class*="pricingTableCardFeaturesList"] > li > *,
+.cl-pricingTableCardFeaturesListItem > *,
+.cl-pricingTableCardFeaturesListItemText {
+  padding-left: 0 !important;
+  margin-left: 0 !important;
+}
+
+ul[class*="pricingTableCardFeatures"] > li::before,
+[class*="pricingTableCardFeaturesList"] > li::before,
+.cl-pricingTableCardFeaturesListItem::before {
+  content: "✓" !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 1.1rem !important;
+  height: 1.1rem !important;
+  border-radius: 9999px !important;
+  background-color: rgba(251, 191, 36, 0.15) !important;
+  border: 1.5px solid #fbbf24 !important;
+  color: #fbbf24 !important;
+  font-weight: 900 !important;
+  font-size: 0.7rem !important;
+  margin-right: 0.4rem !important;
+  flex-shrink: 0 !important;
+}
+
+
+
+
+
+
+

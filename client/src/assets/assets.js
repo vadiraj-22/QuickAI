@@ -18,6 +18,9 @@ export const assets = {
     star_dull_icon,
     profile_img_1,
     arrow_icon,
+    ai_gen_img_1,
+    ai_gen_img_2,
+    ai_gen_img_3,
 };
 
 export const AiToolsData = [

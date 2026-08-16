@@ -6,28 +6,36 @@ import Testimonials from '../components/Testimonials'
 import Plan from '../components/Plan'
 import Footer from '../components/Footer'
 import CompanyLogo from '../components/CompanyLogo'
-import DotGrid from '../components/ui/DotGrid'
+import MoltenMetal from '../components/ui/MoltenMetal'
 
 const Home = () => {
   return (
     <div className="dark relative bg-[var(--background)] min-h-screen">
-      {/* DotGrid Background Animation */}
-      <div className="fixed inset-0 z-0" style={{ pointerEvents: 'none' }}>
-        <DotGrid
-          dotSize={5}
-          gap={18}
-          baseColor="#2a2a2a"
-          activeColor="#fff000"
-          proximity={120}
-          shockRadius={250}
-          shockStrength={5}
-          resistance={750}
-          returnDuration={1.5}
-          style={{ pointerEvents: 'auto' }}
+      {/* MoltenMetal Background Animation */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <MoltenMetal
+          color1="#0f0d17"
+          color2="#ffc100"
+          color3="#ffffff"
+          speed={0.95}
+          scale={5.2}
+          detail={3}
+          glow={1.6}
+          coreSize={0.15}
+          swirl={1.65}
+          fold={-0.23}
+          blackPoint={0.02}
+          brightness={1.55}
+          colorMode="frost"
+          grain={true}
+          grainIntensity={0.21}
+          mouseInteraction={true}
+          mouseStrength={1}
+          opacity={1.0}
         />
       </div>
 
-      {/* Main Content - Above the dot grid */}
+      {/* Main Content - Above the background */}
       <div className="relative z-10">
         <Navbar/>
         <Hero/>
@@ -42,3 +50,4 @@ const Home = () => {
 }
 
 export default Home
+
