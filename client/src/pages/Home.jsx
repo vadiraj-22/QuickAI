@@ -36,13 +36,15 @@ const Home = () => {
       </div>
 
       {/* Main Content - Above the background */}
-      <div className="relative z-10">
-        <Navbar/>
-        <Hero/>
-        <CompanyLogo/>
-        <AiTools/>
-        <Testimonials/>
-        <Plan/>
+      <div className="relative z-10 flex flex-col min-h-screen justify-between">
+        <div className="flex-1">
+          <Navbar/>
+          <Hero/>
+          <CompanyLogo/>
+          <AiTools/>
+          <Testimonials/>
+          <Plan/>
+        </div>
         <Footer/>
       </div>
     </div>

@@ -194,9 +194,7 @@
 html,
 body,
 #root {
-  height: 100vh;
-  max-height: 100vh;
-  overflow: hidden !important;
+  min-height: 100vh;
   background: #090912;
   margin: 0;
   padding: 0;
