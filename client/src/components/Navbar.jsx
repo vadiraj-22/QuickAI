@@ -48,30 +48,48 @@ const Navbar = () => {
           {/* Desktop Navigation Links - Centered */}
           <div className='hidden md:flex items-center gap-8 text-sm font-medium text-gray-300 absolute left-1/2 -translate-x-1/2'>
             <a 
-              href="#features" 
+              href="/#features" 
               onClick={(e) => {
-                e.preventDefault();
-                document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
+                if (window.location.pathname === '/') {
+                  e.preventDefault();
+                  const element = document.getElementById('features');
+                  if (element) {
+                    const top = element.getBoundingClientRect().top + window.scrollY - 100;
+                    window.scrollTo({ top, behavior: 'smooth' });
+                  }
+                }
               }}
               className='hover:text-white transition-colors cursor-pointer'
             >
               Features
             </a>
             <a 
-              href="#testimonials" 
+              href="/#testimonials" 
               onClick={(e) => {
-                e.preventDefault();
-                document.getElementById('testimonials')?.scrollIntoView({ behavior: 'smooth' });
+                if (window.location.pathname === '/') {
+                  e.preventDefault();
+                  const element = document.getElementById('testimonials');
+                  if (element) {
+                    const top = element.getBoundingClientRect().top + window.scrollY - 100;
+                    window.scrollTo({ top, behavior: 'smooth' });
+                  }
+                }
               }}
               className='hover:text-white transition-colors cursor-pointer'
             >
               Testimonials
             </a>
             <a 
-              href="#pricing" 
+              href="/#pricing" 
               onClick={(e) => {
-                e.preventDefault();
-                document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
+                if (window.location.pathname === '/') {
+                  e.preventDefault();
+                  const element = document.getElementById('pricing');
+                  if (element) {
+                    const top = element.getBoundingClientRect().top + window.scrollY - 100;
+                    window.scrollTo({ top, behavior: 'smooth' });
+                  }
+                }
               }}
               className='hover:text-white transition-colors cursor-pointer'
             >
@@ -116,33 +134,51 @@ const Navbar = () => {
       >
         <div className='flex flex-col p-6 gap-4'>
           <a 
-            href="#features" 
+            href="/#features" 
             onClick={(e) => {
-              e.preventDefault();
-              document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
-              setMobileMenuOpen(false);
+              if (window.location.pathname === '/') {
+                e.preventDefault();
+                const element = document.getElementById('features');
+                if (element) {
+                  const top = element.getBoundingClientRect().top + window.scrollY - 100;
+                  window.scrollTo({ top, behavior: 'smooth' });
+                }
+                setMobileMenuOpen(false);
+              }
             }}
             className='text-gray-200 hover:text-white font-medium py-2 px-4 hover:bg-white/10 rounded-xl transition-all cursor-pointer'
           >
             Features
           </a>
           <a 
-            href="#testimonials" 
+            href="/#testimonials" 
             onClick={(e) => {
-              e.preventDefault();
-              document.getElementById('testimonials')?.scrollIntoView({ behavior: 'smooth' });
-              setMobileMenuOpen(false);
+              if (window.location.pathname === '/') {
+                e.preventDefault();
+                const element = document.getElementById('testimonials');
+                if (element) {
+                  const top = element.getBoundingClientRect().top + window.scrollY - 100;
+                  window.scrollTo({ top, behavior: 'smooth' });
+                }
+                setMobileMenuOpen(false);
+              }
             }}
             className='text-gray-200 hover:text-white font-medium py-2 px-4 hover:bg-white/10 rounded-xl transition-all cursor-pointer'
           >
             Testimonials
           </a>
           <a 
-            href="#pricing" 
+            href="/#pricing" 
             onClick={(e) => {
-              e.preventDefault();
-              document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
-              setMobileMenuOpen(false);
+              if (window.location.pathname === '/') {
+                e.preventDefault();
+                const element = document.getElementById('pricing');
+                if (element) {
+                  const top = element.getBoundingClientRect().top + window.scrollY - 100;
+                  window.scrollTo({ top, behavior: 'smooth' });
+                }
+                setMobileMenuOpen(false);
+              }
             }}
             className='text-gray-200 hover:text-white font-medium py-2 px-4 hover:bg-white/10 rounded-xl transition-all cursor-pointer'
           >
