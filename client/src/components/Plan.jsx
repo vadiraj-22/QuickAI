@@ -85,9 +85,30 @@ const Plan = () => {
 
     if (userPlan === planId) return
 
-    // Open Clerk Billing Modal for subscription management and payments
-    toast('Opening Billing portal in Clerk...', { icon: '💳' })
-    openUserProfile()
+    try {
+      setLoadingPlan(planId)
+      const token = await getToken()
+      
+      const { data } = await axios.post(
+        '/api/user/update-plan', 
+        { plan: planId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      
+      if (data.success) {
+        toast.success(data.message)
+        setIsBackendPremium(planId === 'premium')
+        // Force refresh user data if necessary
+        window.location.reload()
+      } else {
+        toast.error(data.message)
+      }
+    } catch (error) {
+      toast.error('Failed to update plan')
+      console.error(error)
+    } finally {
+      setLoadingPlan(null)
+    }
   }
 
   return (
