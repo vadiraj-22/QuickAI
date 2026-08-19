@@ -51,9 +51,16 @@ const generateWithRetry = async (operation, maxRetries = 5) => {
     }
 };
 
+// Helper function to extract userId safely
+const getUserId = (req) => {
+    if (req.userId) return req.userId;
+    const authObj = typeof req.auth === 'function' ? req.auth() : (req.auth || {});
+    return authObj.userId;
+};
+
 export const generateArticle = async (req, res) => {
     try {
-        const { userId } = req.auth;
+        const userId = getUserId(req);
         const { prompt, length } = req.body;
         const plan = req.plan;
         const free_usage = req.free_usage;
@@ -103,7 +110,7 @@ export const generateArticle = async (req, res) => {
 
 export const generateBlogTitle = async (req, res) => {
     try {
-        const { userId } = req.auth;
+        const userId = getUserId(req);
         const { prompt } = req.body;
         const plan = req.plan;
         const free_usage = req.free_usage;
@@ -149,7 +156,7 @@ export const generateBlogTitle = async (req, res) => {
 
 export const generateImage = async (req, res) => {
     try {
-        const { userId } = req.auth;
+        const userId = getUserId(req);
         const { prompt, publish } = req.body;
         const plan = req.plan;
         const free_usage = req.free_usage;
@@ -195,7 +202,7 @@ export const generateImage = async (req, res) => {
 
 export const removeImageBackground = async (req, res) => {
     try {
-        const { userId } = req.auth;
+        const userId = getUserId(req);
         const image = req.file;
         const plan = req.plan;
 
@@ -252,7 +259,7 @@ export const removeImageBackground = async (req, res) => {
 
 export const removeImageObject = async (req, res) => {
     try {
-        const { userId } = req.auth;
+        const userId = getUserId(req);
         const image = req.file;
         const plan = req.plan;
         const { object } = req.body;
@@ -300,7 +307,7 @@ export const removeImageObject = async (req, res) => {
 
 export const resumeReview = async (req, res) => {
     try {
-        const { userId } = req.auth;
+        const userId = getUserId(req);
         const resume = req.file;
         const plan = req.plan;
 

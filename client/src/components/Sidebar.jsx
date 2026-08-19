@@ -1,7 +1,8 @@
-import React from 'react'
-import { useUser, useClerk, Protect } from '@clerk/clerk-react'
+import React, { useState, useEffect } from 'react'
+import { useUser, useClerk, useAuth, Protect } from '@clerk/clerk-react'
 import { Eraser, FileText, Hash, House, Image, LogOut, Scissors, SquarePen, Users, Sparkles, Crown } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
+import axios from 'axios'
 
 const navItems = [
   { to: '/ai', label: 'Dashboard', Icon: House, gradient: 'from-[#3C81F6] to-[#60a5fa]', glow: 'rgba(60,129,246,0.25)' },
@@ -17,8 +18,26 @@ const navItems = [
 const Sidebar = ({ sidebar, setSidebar }) => {
   const { user } = useUser()
   const { signOut, openUserProfile } = useClerk()
+  const { getToken } = useAuth()
+  const [isBackendPremium, setIsBackendPremium] = useState(false)
 
-  const userPlan = user?.publicMetadata?.plan || user?.unsafeMetadata?.plan || 'free'
+  useEffect(() => {
+    const checkPremium = async () => {
+      if (!user) return
+      try {
+        const token = await getToken()
+        const { data } = await axios.get('/api/user/get-usage-data', {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        if (data.success) {
+          setIsBackendPremium(!!data.isPremium)
+        }
+      } catch (err) {}
+    }
+    checkPremium()
+  }, [user])
+
+  const userPlan = (user?.publicMetadata?.plan === 'premium' || isBackendPremium) ? 'premium' : 'free'
   const isPremium = userPlan === 'premium'
 
   return (

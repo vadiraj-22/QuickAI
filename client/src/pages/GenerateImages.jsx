@@ -1,7 +1,7 @@
 import { Image, Sparkles } from 'lucide-react'
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
-import { useAuth } from '@clerk/clerk-react'
+import { useAuth, useUser } from '@clerk/clerk-react'
 import toast from 'react-hot-toast'
 import LoadingOverlay, { PIPELINE_MESSAGES } from '../components/LoadingOverlay'
 
@@ -34,6 +34,9 @@ const GenerateImages = () => {
   const [isPremium, setIsPremium] = useState(false)
   const [publish, setPublish] = useState(false)
   const { getToken } = useAuth()
+  const { user } = useUser()
+
+  const effectiveIsPremium = user?.publicMetadata?.plan === 'premium' || isPremium;
 
   const fetchUsageData = async () => {
     try {
@@ -49,7 +52,7 @@ const GenerateImages = () => {
     }
   }
 
-  useEffect(() => { fetchUsageData() }, [])
+  useEffect(() => { fetchUsageData() }, [user])
 
   const onSubmitHandler = async e => {
     e.preventDefault()
@@ -60,7 +63,7 @@ const GenerateImages = () => {
         headers: { Authorization: `Bearer ${await getToken()}` },
       })
       if (data.success) {
-        if (!isPremium) setUsageCount(prev => prev + 1)
+        if (!effectiveIsPremium) setUsageCount(prev => prev + 1)
         setContent(data.content)
       } else {
         toast.error(data.message)
@@ -72,8 +75,8 @@ const GenerateImages = () => {
     }
   }
 
-  const remainingImages = isPremium ? 'Unlimited' : Math.max(0, 5 - usageCount)
-  const canGenerate = isPremium || usageCount < 5
+  const remainingImages = effectiveIsPremium ? 'Unlimited' : Math.max(0, 5 - usageCount)
+  const canGenerate = effectiveIsPremium || usageCount < 5
 
   const panelStyle = {
     background: 'rgba(255,255,255,0.03)',
@@ -124,11 +127,11 @@ const GenerateImages = () => {
           <div className='p-3 rounded-xl' style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
             <div className='flex justify-between items-center text-sm mb-2'>
               <span className='text-white/50 text-xs'>Images remaining</span>
-              <span className='font-semibold text-sm' style={{ color: isPremium ? '#4ade80' : ACCENT }}>
+              <span className='font-semibold text-sm' style={{ color: effectiveIsPremium ? '#4ade80' : ACCENT }}>
                 {remainingImages}
               </span>
             </div>
-            {!isPremium && (
+            {!effectiveIsPremium && (
               <div className='w-full rounded-full h-1.5' style={{ background: 'rgba(255,255,255,0.08)' }}>
                 <div
                   className='h-1.5 rounded-full transition-all duration-300'
@@ -215,11 +218,11 @@ const GenerateImages = () => {
             {!canGenerate ? 'Limit Reached — Upgrade to Continue' : 'Generate Image'}
           </button>
 
-          {!isPremium && usageCount >= 5 && (
+          {!effectiveIsPremium && usageCount >= 5 && (
             <div className='p-3 rounded-xl text-sm' style={{ background: 'rgba(234,179,8,0.08)', border: '1px solid rgba(234,179,8,0.3)' }}>
               <p className='text-amber-300/80'>
                 You've used all 5 free images.{' '}
-                <a href='/plan' className='text-amber-400 hover:underline'>Upgrade to Premium</a>
+                <a href='/#pricing' className='text-amber-400 hover:underline'>Upgrade to Premium</a>
               </p>
             </div>
           )}

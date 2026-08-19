@@ -2,9 +2,15 @@
 import sql from "../configs/db.js";
 import { clerkClient } from "@clerk/express";
 
- export const  getUserCreations = async(req , res)=>{ 
+const getUserId = (req) => {
+    if (req.userId) return req.userId;
+    const authObj = typeof req.auth === 'function' ? req.auth() : (req.auth || {});
+    return authObj.userId;
+};
+
+export const getUserCreations = async(req , res)=>{ 
     try {
-        const {userId}=req.auth()
+        const userId = getUserId(req);
         const creations = await sql`SELECT * FROM creations where user_id =${userId} order by created_at DESC`;
         res.json({success: true, creations});
 
@@ -13,7 +19,7 @@ import { clerkClient } from "@clerk/express";
     }
  }
 
-  export const  getPublishedCreations = async(req , res)=>{ 
+  export const getPublishedCreations = async(req , res)=>{ 
     try {
         const creations = 
         await sql`SELECT * FROM creations 
@@ -28,7 +34,7 @@ import { clerkClient } from "@clerk/express";
 
   export const getUsageData = async(req , res)=>{ 
     try {
-        const {userId} = req.auth()
+        const userId = getUserId(req);
         const plan = req.plan
         const free_usage = req.free_usage
         
@@ -55,10 +61,10 @@ import { clerkClient } from "@clerk/express";
     }
   }
 
-  export const  toggleLikeCreations = async(req , res)=>{ 
+  export const toggleLikeCreations = async(req , res)=>{ 
     try {
 
-        const {userId}=req.auth()
+        const userId = getUserId(req);
         const {id} =req.body
 
         const [creation]= 
@@ -97,7 +103,7 @@ import { clerkClient } from "@clerk/express";
 
 export const updateUserPlan = async (req, res) => {
     try {
-        const { userId } = req.auth();
+        const userId = getUserId(req);
         const { plan } = req.body;
         const targetPlan = plan || 'premium';
 
@@ -106,6 +112,10 @@ export const updateUserPlan = async (req, res) => {
         await clerkClient.users.updateUserMetadata(userId, {
             publicMetadata: {
                 ...user.publicMetadata,
+                plan: targetPlan
+            },
+            unsafeMetadata: {
+                ...user.unsafeMetadata,
                 plan: targetPlan
             }
         });

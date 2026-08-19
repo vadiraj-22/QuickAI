@@ -49,7 +49,7 @@ const Dashboard = () => {
         setCreations(creationsRes.data.creations)
       }
       
-      const userPlan = user?.publicMetadata?.plan || user?.unsafeMetadata?.plan
+      const userPlan = user?.publicMetadata?.plan
       if (userPlan === 'premium' || usageRes.data?.isPremium) {
         setIsPremium(true)
       } else {

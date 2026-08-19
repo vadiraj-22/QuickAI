@@ -4,37 +4,59 @@ import { clerkClient } from "@clerk/express";
 
 export const auth = async (req, res, next) => {
     try {
-        const { userId, has } = req.auth;
-        
-        let hasPremiumPlan = false;
+        const authObj = typeof req.auth === 'function' ? req.auth() : (req.auth || {});
+        const userId = authObj.userId || req.auth?.userId;
+
+        if (!userId) {
+            return res.status(401).json({ success: false, message: "Unauthorized access" });
+        }
+
+        let isPremiumPlan = false;
+
+        // 1. Check Clerk Billing API for active paid subscription
         try {
-            hasPremiumPlan = typeof has === 'function' ? await has({ plan: 'premium' }) : false;
+            if (clerkClient.billing?.getUserBillingSubscription) {
+                const sub = await clerkClient.billing.getUserBillingSubscription(userId);
+                if (sub && sub.status === 'active') {
+                    const items = sub.subscriptionItems || [];
+                    isPremiumPlan = items.some(item => {
+                        const planName = (item.plan?.name || item.plan?.slug || '').toLowerCase();
+                        return planName.includes('premium');
+                    });
+                }
+            }
         } catch (e) {
-            hasPremiumPlan = false;
+            console.error("Error checking Clerk Billing subscription:", e.message);
         }
 
         const user = await clerkClient.users.getUser(userId);
 
-        if (!hasPremiumPlan) {
-            hasPremiumPlan = 
+        // 2. Fallback check on user metadata
+        if (!isPremiumPlan) {
+            isPremiumPlan = 
                 user.publicMetadata?.plan === 'premium' ||
                 user.privateMetadata?.plan === 'premium' ||
                 user.unsafeMetadata?.plan === 'premium';
         }
 
-        // Check if free_usage exists in metadata, if not initialize it to 0
-        if (user.privateMetadata?.free_usage !== undefined) {
-            req.free_usage = user.privateMetadata.free_usage;
-        } else {
-            await clerkClient.users.updateUserMetadata(userId, {
-                privateMetadata: {
-                    ...user.privateMetadata,
-                    free_usage: 0
-                }
-            });
-            req.free_usage = 0;
+        let needsUpdate = false;
+        const newPrivate = { ...user.privateMetadata };
+        const newPublic = { ...user.publicMetadata };
+
+        if (newPrivate.free_usage === undefined) {
+            newPrivate.free_usage = 0;
+            needsUpdate = true;
         }
-        req.plan = hasPremiumPlan ? 'premium' : 'free';
+
+        if (needsUpdate) {
+            await clerkClient.users.updateUserMetadata(userId, {
+                privateMetadata: newPrivate,
+            });
+        }
+
+        req.userId = userId;
+        req.free_usage = newPrivate.free_usage || 0;
+        req.plan = isPremiumPlan ? 'premium' : 'free';
         next();
     } catch (error) {
         res.json({ success: false, message: error.message });

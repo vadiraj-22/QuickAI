@@ -8,7 +8,7 @@ axios.defaults.baseURL = import.meta.env.VITE_BASE_URL
 
 const Plan = () => {
   const { isSignedIn, user } = useUser()
-  const { openSignIn } = useClerk()
+  const { openSignIn, openUserProfile } = useClerk()
   const { getToken } = useAuth()
   const [loadingPlan, setLoadingPlan] = useState(null)
   const [isBackendPremium, setIsBackendPremium] = useState(false)
@@ -20,8 +20,8 @@ const Plan = () => {
       const { data } = await axios.get('/api/user/get-usage-data', {
         headers: { Authorization: `Bearer ${token}` }
       })
-      if (data.success && data.isPremium) {
-        setIsBackendPremium(true)
+      if (data.success) {
+        setIsBackendPremium(!!data.isPremium)
       }
     } catch (err) {
       console.error('Error fetching plan status:', err)
@@ -32,7 +32,7 @@ const Plan = () => {
     fetchPlanStatus()
   }, [isSignedIn, user])
 
-  const userPlan = (user?.publicMetadata?.plan === 'premium' || user?.unsafeMetadata?.plan === 'premium' || isBackendPremium) ? 'premium' : 'free'
+  const userPlan = (user?.publicMetadata?.plan === 'premium' || isBackendPremium) ? 'premium' : 'free'
 
   const getCtaText = (planId) => {
     if (!isSignedIn) {
@@ -83,33 +83,9 @@ const Plan = () => {
 
     if (userPlan === planId) return
 
-    try {
-      setLoadingPlan(planId)
-      const token = await getToken()
-      const { data } = await axios.post('/api/user/update-plan', { plan: planId }, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-
-      if (data.success) {
-        toast.success(data.message || `Successfully updated plan!`)
-        if (planId === 'premium') {
-          setIsBackendPremium(true)
-        } else {
-          setIsBackendPremium(false)
-        }
-        if (user?.reload) {
-          await user.reload()
-        }
-        window.location.reload()
-      } else {
-        toast.error(data.message || 'Failed to update plan')
-      }
-    } catch (error) {
-      console.error('Error updating plan:', error)
-      toast.error(error.message || 'An error occurred while updating plan')
-    } finally {
-      setLoadingPlan(null)
-    }
+    // Open Clerk Billing Modal for subscription management and payments
+    toast('Opening Billing portal in Clerk...', { icon: '💳' })
+    openUserProfile()
   }
 
   return (

@@ -1,7 +1,7 @@
 import { Eraser, Sparkles, Upload } from 'lucide-react'
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
-import { useAuth } from '@clerk/clerk-react'
+import { useAuth, useUser } from '@clerk/clerk-react'
 import toast from 'react-hot-toast'
 import LoadingOverlay, { PIPELINE_MESSAGES } from '../components/LoadingOverlay'
 
@@ -32,6 +32,9 @@ const RemoveBackground = () => {
   const [bgRemovalUsage, setBgRemovalUsage] = useState(0)
   const [isPremium, setIsPremium] = useState(false)
   const { getToken } = useAuth()
+  const { user } = useUser()
+
+  const effectiveIsPremium = user?.publicMetadata?.plan === 'premium' || isPremium;
 
   const fetchUsageData = async () => {
     try {
@@ -47,7 +50,7 @@ const RemoveBackground = () => {
     }
   }
 
-  useEffect(() => { fetchUsageData() }, [])
+  useEffect(() => { fetchUsageData() }, [user])
 
   const onSubmitHandler = async e => {
     e.preventDefault()
@@ -65,7 +68,7 @@ const RemoveBackground = () => {
         headers: { Authorization: `Bearer ${await getToken()}` },
       })
       if (data.success) {
-        if (!isPremium) setBgRemovalUsage(prev => prev + 1)
+        if (!effectiveIsPremium) setBgRemovalUsage(prev => prev + 1)
         setContent(data.content)
       } else {
         toast.error(data.message)
@@ -77,13 +80,21 @@ const RemoveBackground = () => {
     }
   }
 
-  const remainingUses = isPremium ? 'Unlimited' : Math.max(0, 5 - bgRemovalUsage)
-  const canRemove = isPremium || bgRemovalUsage < 5
+  const remainingUses = effectiveIsPremium ? 'Unlimited' : Math.max(0, 5 - bgRemovalUsage)
+  const canRemove = effectiveIsPremium || bgRemovalUsage < 5
 
   const panelStyle = {
     background: 'rgba(255,255,255,0.03)',
     border: '1px solid rgba(255,255,255,0.08)',
     backdropFilter: 'blur(20px)',
+  }
+
+  const inputStyle = {
+    background: 'rgba(255,255,255,0.05)',
+    border: '1px solid rgba(255,255,255,0.1)',
+    color: '#fff',
+    outline: 'none',
+    transition: 'border-color 0.2s, box-shadow 0.2s',
   }
 
   return (
@@ -100,7 +111,7 @@ const RemoveBackground = () => {
         </div>
         <div>
           <h1 className='text-xl font-bold text-white'>Remove Background</h1>
-          <p className='text-xs text-white/40'>Cleanly erase image backgrounds with AI</p>
+          <p className='text-xs text-white/40'>Extract image subjects automatically with AI</p>
         </div>
       </div>
 
@@ -108,21 +119,21 @@ const RemoveBackground = () => {
         {/* Left — config panel */}
         <form
           onSubmit={onSubmitHandler}
-          className='w-full lg:w-1/2 max-w-xl p-5 rounded-2xl flex flex-col gap-5 shrink-0 lg:shrink overflow-y-auto'
+          className='w-full lg:w-1/2 max-w-xl p-5 rounded-2xl flex flex-col gap-4 shrink-0 lg:shrink overflow-y-auto'
           style={{ ...panelStyle, borderTop: `2px solid ${ACCENT}` }}
         >
           <div className='flex items-center gap-2'>
             <Sparkles className='w-4 h-4' style={{ color: ACCENT }} />
-            <h2 className='text-base font-semibold text-white'>Background Remover</h2>
+            <h2 className='text-base font-semibold text-white'>AI Background Remover</h2>
           </div>
 
-          {/* Usage bar */}
+          {/* Usage indicator */}
           <div className='p-3 rounded-xl' style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
             <div className='flex justify-between items-center mb-2'>
               <span className='text-xs text-white/50'>Free uses remaining</span>
               <span className='text-sm font-semibold' style={{ color: ACCENT }}>{remainingUses}</span>
             </div>
-            {!isPremium && (
+            {!effectiveIsPremium && (
               <div className='w-full rounded-full h-1.5' style={{ background: 'rgba(255,255,255,0.08)' }}>
                 <div
                   className='h-1.5 rounded-full transition-all duration-300'
@@ -180,11 +191,11 @@ const RemoveBackground = () => {
             Remove Background
           </button>
 
-          {!isPremium && bgRemovalUsage >= 5 && (
+          {!effectiveIsPremium && bgRemovalUsage >= 5 && (
             <div className='p-3 rounded-xl text-sm' style={{ background: 'rgba(234,179,8,0.08)', border: '1px solid rgba(234,179,8,0.3)' }}>
               <p className='text-amber-300/80'>
                 You've used all free background removals.{' '}
-                <a href='/plan' className='text-amber-400 hover:underline'>Upgrade to Premium</a>
+                <a href='/#pricing' className='text-amber-400 hover:underline'>Upgrade to Premium</a>
               </p>
             </div>
           )}
