@@ -60,12 +60,28 @@ export default async function handler(req, res) {
 
     // Forward response headers (exclude problematic ones)
     const skipResponseHeaders = new Set([
-      'transfer-encoding', 'connection', 'content-encoding'
+      'transfer-encoding', 'connection', 'content-encoding', 'set-cookie'
     ]);
     for (const [key, value] of response.headers.entries()) {
       if (!skipResponseHeaders.has(key.toLowerCase())) {
-        res.setHeader(key, value);
+        // Rewrite Location headers so redirects stay on our domain
+        if (key.toLowerCase() === 'location') {
+          const location = value.replace(
+            'https://frontend-api.clerk.dev',
+            'https://quick-ai-gray.vercel.app/__clerk'
+          );
+          res.setHeader(key, location);
+        } else {
+          res.setHeader(key, value);
+        }
       }
+    }
+
+    // Handle Set-Cookie headers separately — they MUST NOT be combined
+    // headers.entries() merges multiple Set-Cookie into one broken string
+    const setCookieHeaders = response.headers.getSetCookie?.() || [];
+    if (setCookieHeaders.length > 0) {
+      res.setHeader('Set-Cookie', setCookieHeaders);
     }
 
     // Forward response body
