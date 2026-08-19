@@ -46,10 +46,13 @@ export default async function handler(req, res) {
       '127.0.0.1';
 
     // Make the proxied request to Clerk
+    // redirect: 'manual' is critical — OAuth callbacks return 302 with Set-Cookie
+    // headers that must be passed back to the browser, not followed by the proxy
     const response = await fetch(targetUrl.toString(), {
       method: req.method,
       headers: forwardHeaders,
       body: ['GET', 'HEAD'].includes(req.method) ? undefined : body,
+      redirect: 'manual',
     });
 
     // Forward response status
