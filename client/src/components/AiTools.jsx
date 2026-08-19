@@ -13,7 +13,7 @@ const AiTools = () => {
         if (user) {
             navigate(path)
         } else {
-            openSignIn()
+            navigate('/ai')
         }
     }
 

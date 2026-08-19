@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useUser, useClerk, useAuth } from '@clerk/clerk-react'
+import { useNavigate } from 'react-router-dom'
 import { Check, Star, ArrowRight, UserCheck, Loader2 } from 'lucide-react'
 import axios from 'axios'
 import toast from 'react-hot-toast'
@@ -10,6 +11,7 @@ const Plan = () => {
   const { isSignedIn, user } = useUser()
   const { openSignIn, openUserProfile } = useClerk()
   const { getToken } = useAuth()
+  const navigate = useNavigate()
   const [loadingPlan, setLoadingPlan] = useState(null)
   const [isBackendPremium, setIsBackendPremium] = useState(false)
 
@@ -77,7 +79,7 @@ const Plan = () => {
 
   const handlePlanAction = async (planId) => {
     if (!isSignedIn) {
-      openSignIn()
+      navigate('/ai')
       return
     }
 

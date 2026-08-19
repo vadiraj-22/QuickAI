@@ -87,7 +87,7 @@ const Navbar = () => {
               </div>
             ) : (
               <button 
-                onClick={openSignIn} 
+                onClick={() => navigate('/ai')} 
                 className='flex items-center gap-2 rounded-full text-xs sm:text-sm font-semibold cursor-pointer bg-amber-400 hover:bg-amber-300 text-gray-950 px-5 py-2.5 shadow-[0_0_20px_rgba(251,191,36,0.25)] hover:shadow-[0_0_25px_rgba(251,191,36,0.4)] active:scale-95 transition-all duration-200'
               >
                 <span className='whitespace-nowrap'>Get Started</span>
