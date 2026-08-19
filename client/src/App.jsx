@@ -10,9 +10,16 @@ import RemoveBackground from './pages/RemoveBackground'
 import Community from './pages/Community'
 import RemoveObject from './pages/RemoveObject'
 import ReviewResume from './pages/ReviewResume'
-import { useAuth } from '@clerk/clerk-react'
+import { useAuth, AuthenticateWithRedirectCallback } from '@clerk/clerk-react'
 import { useEffect } from 'react'
 import { Toaster} from 'react-hot-toast'
+
+// SSO callback page — handles OAuth redirect after Google sign-in
+const SSOCallback = () => (
+  <div className='flex items-center justify-center h-screen bg-[#090912]'>
+    <AuthenticateWithRedirectCallback />
+  </div>
+)
 
 
 const App = () => {
@@ -22,6 +29,7 @@ const App = () => {
       <Toaster />
       <Routes>
         <Route path='/' element={<Home/>}/>
+        <Route path='/sso-callback' element={<SSOCallback/>}/>
         <Route path='/ai' element={<Layout/>}>
           <Route index element={<Dashboard/>}/>
           <Route path='write-article' element={<WriteArticle/>}/>

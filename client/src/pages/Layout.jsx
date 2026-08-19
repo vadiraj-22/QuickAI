@@ -71,7 +71,7 @@ const Layout = () => {
     </div>
   ) : (
     <div className='dark flex items-center justify-center h-screen' style={{ background: '#090912' }}>
-      <SignIn />
+      <SignIn fallbackRedirectUrl='/ai' forceRedirectUrl='/ai' />
     </div>
   )
 }
