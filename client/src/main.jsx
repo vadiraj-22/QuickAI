@@ -15,7 +15,7 @@ if (!PUBLISHABLE_KEY) {
 createRoot(document.getElementById('root')).render(
   <ClerkProvider
     publishableKey={PUBLISHABLE_KEY}
-    proxyUrl='https://quick-ai-gray.vercel.app/__clerk'
+    {...(window.location.hostname !== 'localhost' ? { proxyUrl: 'https://quick-ai-gray.vercel.app/__clerk' } : {})}
     signInUrl='/ai'
     signUpUrl='/ai'
     signInFallbackRedirectUrl='/ai'
