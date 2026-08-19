@@ -18,7 +18,7 @@ const AiTools = () => {
     }
 
     return (
-        <section id="features" className='w-full py-24 px-4 sm:px-6 lg:px-12 max-w-7xl mx-auto space-y-28'>
+        <section className='w-full py-24 px-4 sm:px-6 lg:px-12 max-w-7xl mx-auto space-y-28'>
             
             {/* Section Header */}
             <div className='flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-white/10 pb-8 text-left'>
@@ -257,7 +257,7 @@ const AiTools = () => {
             </div>
 
             {/* Bento Grid Section Header */}
-            <div className='pt-12 border-t border-white/10 text-left space-y-2'>
+            <div id="features" className='pt-12 border-t border-white/10 text-left space-y-2'>
                 <h3 className='text-2xl sm:text-3xl font-bold text-white'>Explore All 6 AI Tools</h3>
                 <p className='text-gray-300 text-sm'>Select any tool below to launch directly into its workspace.</p>
             </div>
