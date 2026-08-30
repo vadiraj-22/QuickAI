@@ -20,8 +20,6 @@ const genAI = new GoogleGenerativeAI(apiKey);
 // Helper function to get model instance (can be easily changed centrally)
 // Using gemini-2.5-flash - latest stable model with good free tier limits
 const getModel = () => genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-// Using gemini-1.5-flash - official stable model with fast response and generous free tier
-const getModel = () => genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 // Helper function for exponential backoff retry logic
 const generateWithRetry = async (operation, maxRetries = 5) => {
@@ -97,7 +95,6 @@ export const generateArticle = async (req, res) => {
 
         // Return appropriate error message to client
         let message = "Failed to generate article. Please try again.";
-        let message = error.message || "Failed to generate article. Please try again.";
 
         if (error.message?.includes('429') || error.message?.includes('Too Many Requests')) {
             message = "Server is busy with too many requests. Please try again in a moment.";
@@ -143,7 +140,6 @@ export const generateBlogTitle = async (req, res) => {
     } catch (error) {
         console.error('Error generating blog title:', error);
         let message = "Failed to generate blog title. Please try again.";
-        let message = error.message || "Failed to generate blog title. Please try again.";
 
         if (error.message?.includes('429') || error.message?.includes('Too Many Requests')) {
             message = "Server is busy with too many requests. Please try again in a moment.";
@@ -359,7 +355,6 @@ export const resumeReview = async (req, res) => {
     } catch (error) {
         console.error('Error in resume review:', error);
         let message = "Failed to review resume. Please try again.";
-        let message = error.message || "Failed to review resume. Please try again.";
 
         if (error.message?.includes('429') || error.message?.includes('Too Many Requests')) {
             message = "Server is busy with too many requests. Please try again in a moment.";

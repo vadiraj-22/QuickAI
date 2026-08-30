@@ -12,8 +12,34 @@ import userRouter from './routes/userRoutes.js';
 const app = express()
 
 await connectCloudinary()
+try {
+    await connectCloudinary()
+} catch (e) {
+    console.error('Cloudinary configuration error:', e.message);
+}
 
 // Configure CORS BEFORE any other middleware
+// 1. Direct CORS preflight and headers handler for all incoming requests (Vercel serverless friendly)
+app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    if (origin) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+    } else {
+        res.setHeader('Access-Control-Allow-Origin', '*');
+    }
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, x-clerk-auth-status, x-clerk-auth-reason, x-clerk-auth-message');
+    res.setHeader('Access-Control-Max-Age', '86400');
+
+    // Instantly respond to preflight OPTIONS requests before any authentication middleware
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+    next();
+});
+
+// Configure CORS package as secondary safeguard
 const allowedOrigins = [
     'https://quick-ai-gray.vercel.app',
     'http://localhost:5173',
@@ -40,6 +66,7 @@ const corsOptions = {
     maxAge: 86400,
     preflightContinue: false,
     optionsSuccessStatus: 204
+    optionsSuccessStatus: 200
 };
 
 app.use(cors(corsOptions));
@@ -55,6 +82,15 @@ app.get('/', (_req, res) => res.send('Server is live!'))
 
 app.use('/api/ai', aiRouter)
 app.use('/api/user', userRouter)
+
+// Global error handler so unexpected errors return JSON instead of crashing Vercel Serverless Function
+app.use((err, req, res, next) => {
+    console.error('Unhandled Server Error:', err);
+    res.status(err.status || 500).json({
+        success: false,
+        message: err.message || 'Internal Server Error'
+    });
+});
 
 const PORT = process.env.PORT || 3000;
 
