@@ -206,6 +206,10 @@ export const removeImageBackground = async (req, res) => {
         const image = req.file;
         const plan = req.plan;
 
+        if (!image) {
+            return res.json({ success: false, message: "No image provided. Please upload an image file." });
+        }
+
         // Get current usage count for background removal
         const user = await clerkClient.users.getUser(userId);
         const bgRemovalUsage = user.privateMetadata?.bg_removal_usage || 0;
@@ -231,6 +235,9 @@ export const removeImageBackground = async (req, res) => {
             resource_type: 'image',
             secure: true
         })
+
+        // Cleanup local temp file if exists
+        try { if (image.path && fs.existsSync(image.path)) fs.unlinkSync(image.path); } catch (e) {}
 
         await sql`INSERT into creations (user_id ,prompt , content ,type )
         values(${userId},'Remove background from the image', ${imageUrl},'image')`;
@@ -264,6 +271,14 @@ export const removeImageObject = async (req, res) => {
         const plan = req.plan;
         const { object } = req.body;
 
+        if (!image) {
+            return res.json({ success: false, message: "No image provided. Please upload an image." });
+        }
+
+        if (!object || !object.trim()) {
+            return res.json({ success: false, message: "Please specify the object to remove." });
+        }
+
         // Get current usage count for object removal
         const user = await clerkClient.users.getUser(userId);
         const objRemovalUsage = user.privateMetadata?.obj_removal_usage || 0;
@@ -274,14 +289,25 @@ export const removeImageObject = async (req, res) => {
         }
 
         const { public_id } = await cloudinary.uploader.upload(image.path)
-
-        const imageUrl = cloudinary.url(public_id, {
-            transformation: [{ effect: `gen_remove:${object}` }],
+        const { public_id } = await cloudinary.uploader.upload(image.path, {
             resource_type: 'image'
         })
 
+        const cleanObject = object.trim();
+        const imageUrl = cloudinary.url(public_id, {
+            transformation: [{ effect: `gen_remove:${object}` }],
+            resource_type: 'image'
+            transformation: [{ effect: `gen_remove:prompt=${cleanObject}` }],
+            resource_type: 'image',
+            secure: true
+        })
+
+        // Cleanup local temp file if exists
+        try { if (image.path && fs.existsSync(image.path)) fs.unlinkSync(image.path); } catch (e) {}
+
         await sql`INSERT into creations (user_id ,prompt , content ,type )
         values(${userId}, ${`Remove ${object} from the image`}, ${imageUrl},'image')`;
+        values(${userId}, ${`Remove ${cleanObject} from the image`}, ${imageUrl},'image')`;
 
         // Increment usage counter for free users
         const newUsage = objRemovalUsage + 1;
@@ -311,6 +337,10 @@ export const resumeReview = async (req, res) => {
         const resume = req.file;
         const plan = req.plan;
 
+        if (!resume) {
+            return res.json({ success: false, message: "No resume provided. Please upload a PDF resume." });
+        }
+
         // Get current usage count for resume review
         const user = await clerkClient.users.getUser(userId);
         const resumeReviewUsage = user.privateMetadata?.resume_review_usage || 0;
@@ -326,6 +356,9 @@ export const resumeReview = async (req, res) => {
 
         const dataBuffer = fs.readFileSync(resume.path)
         const pdfData = await pdf(dataBuffer)
+
+        // Cleanup local temp file
+        try { if (resume.path && fs.existsSync(resume.path)) fs.unlinkSync(resume.path); } catch (e) {}
 
         const prompt = `Review the following resume and provide the constructive feedback on its strengths, weeknesses, and areas for improvement . Resume content :\n\n${pdfData.text}`;
 
@@ -355,6 +388,7 @@ export const resumeReview = async (req, res) => {
     } catch (error) {
         console.error('Error in resume review:', error);
         let message = "Failed to review resume. Please try again.";
+        let message = error.message || "Failed to review resume. Please try again.";
 
         if (error.message?.includes('429') || error.message?.includes('Too Many Requests')) {
             message = "Server is busy with too many requests. Please try again in a moment.";
