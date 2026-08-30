@@ -11,14 +11,12 @@ import userRouter from './routes/userRoutes.js';
 
 const app = express()
 
-await connectCloudinary()
 try {
     await connectCloudinary()
 } catch (e) {
     console.error('Cloudinary configuration error:', e.message);
 }
 
-// Configure CORS BEFORE any other middleware
 // 1. Direct CORS preflight and headers handler for all incoming requests (Vercel serverless friendly)
 app.use((req, res, next) => {
     const origin = req.headers.origin;
@@ -65,13 +63,10 @@ const corsOptions = {
     exposedHeaders: ['Content-Length', 'Content-Type'],
     maxAge: 86400,
     preflightContinue: false,
-    optionsSuccessStatus: 204
     optionsSuccessStatus: 200
 };
 
 app.use(cors(corsOptions));
-
-// Handle OPTIONS requests explicitly using the same options
 app.options('*', cors(corsOptions));
 
 app.use(express.json({ limit: '10mb' }))
