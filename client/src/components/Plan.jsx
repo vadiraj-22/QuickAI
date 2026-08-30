@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useUser, useClerk, useAuth } from '@clerk/clerk-react'
+import { useUser, useAuth } from '@clerk/clerk-react'
 import { useNavigate } from 'react-router-dom'
 import { Check, Star, ArrowRight, UserCheck, Loader2 } from 'lucide-react'
 import axios from 'axios'
@@ -9,7 +9,6 @@ axios.defaults.baseURL = import.meta.env.VITE_BASE_URL
 
 const Plan = () => {
   const { isSignedIn, user } = useUser()
-  const { openSignIn, openUserProfile } = useClerk()
   const { getToken } = useAuth()
   const navigate = useNavigate()
   const [loadingPlan, setLoadingPlan] = useState(null)

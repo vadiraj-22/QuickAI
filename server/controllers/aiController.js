@@ -171,19 +171,14 @@ export const generateImage = async (req, res) => {
 
         // Check if free user has reached the 5 image limit
         if (plan !== 'premium' && free_usage >= 5) {
-            return res.json({ success: false, message: "You've reached your free limit of 5 images. Upgrade to premium for unlimited image generation." })
             return res.json({ success: false, message: "You've reached your free limit of 5 images. Upgrade to premium for unlimited image generation." });
         }
 
-        const formData = new FormData()
-        formData.append('prompt', prompt)
         const formData = new FormData();
         formData.append('prompt', prompt.trim());
 
-        // Note: Using ClipDrop for images, not Gemini
         // Call ClipDrop text-to-image with proper multipart headers
         const response = await axios.post("https://clipdrop-api.co/text-to-image/v1", formData, {
-            headers: { 'x-api-key': process.env.CLIPDROP_API_KEY },
             headers: {
                 'x-api-key': process.env.CLIPDROP_API_KEY.trim(),
                 ...formData.getHeaders()
@@ -191,10 +186,8 @@ export const generateImage = async (req, res) => {
             responseType: "arraybuffer",
         });
 
-        const base64Image = `data:image/png;base64,${Buffer.from(response.data, 'binary').toString('base64')}`;
         const base64Image = `data:image/png;base64,${Buffer.from(response.data).toString('base64')}`;
 
-        const { secure_url } = await cloudinary.uploader.upload(base64Image)
         const { secure_url } = await cloudinary.uploader.upload(base64Image);
 
         await sql`INSERT into creations (user_id ,prompt , content ,type ,publish)
@@ -206,16 +199,12 @@ export const generateImage = async (req, res) => {
                 privateMetadata: {
                     free_usage: free_usage + 1
                 }
-            })
             });
         }
 
-        res.json({ success: true, content: secure_url })
         res.json({ success: true, content: secure_url });
 
     } catch (error) {
-        console.error('Error generating image:', error.message);
-        res.json({ success: false, message: error.message || "Failed to generate image" })
         let errorMsg = error.message;
         if (error.response?.data) {
             try {

@@ -2,12 +2,11 @@ import React, { useState, useEffect } from 'react'
 import { assets } from '../assets/assets'
 import { useNavigate } from 'react-router-dom'
 import { ArrowRight, Menu, X } from 'lucide-react'
-import { useClerk, useUser, UserButton } from '@clerk/clerk-react'
+import { useUser, UserButton } from '@clerk/clerk-react'
 
 const Navbar = () => {
     const navigate = useNavigate()
     const { user } = useUser()
-    const { openSignIn } = useClerk()
     const [scrolled, setScrolled] = useState(false)
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 

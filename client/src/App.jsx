@@ -10,8 +10,7 @@ import RemoveBackground from './pages/RemoveBackground'
 import Community from './pages/Community'
 import RemoveObject from './pages/RemoveObject'
 import ReviewResume from './pages/ReviewResume'
-import { useAuth, AuthenticateWithRedirectCallback } from '@clerk/clerk-react'
-import { useEffect } from 'react'
+import { AuthenticateWithRedirectCallback } from '@clerk/clerk-react'
 import { Toaster} from 'react-hot-toast'
 
 // SSO callback page — handles OAuth redirect after Google sign-in

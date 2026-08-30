@@ -40,6 +40,7 @@ app.use((req, res, next) => {
 // Configure CORS package as secondary safeguard
 const allowedOrigins = [
     'https://quick-ai-gray.vercel.app',
+    'https://quick-ai-backend-mu-nine.vercel.app',
     'http://localhost:5173',
     'http://localhost:3000'
 ];

@@ -1,13 +1,12 @@
 import React from 'react'
 import { AiToolsData, assets } from '../assets/assets'
 import { useNavigate } from 'react-router-dom'
-import { useUser, useClerk } from '@clerk/clerk-react'
+import { useUser } from '@clerk/clerk-react'
 import { ArrowRight, Sparkles, CheckCircle2, FileText, Image as ImageIcon, Eraser, Scissors } from 'lucide-react'
 
 const AiTools = () => {
     const navigate = useNavigate()
     const { user } = useUser()
-    const { openSignIn } = useClerk()
 
     const handleToolClick = (path) => {
         if (user) {

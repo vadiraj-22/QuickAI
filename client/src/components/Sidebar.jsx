@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react'
-import { useUser, useClerk, useAuth, Protect } from '@clerk/clerk-react'
-import { Eraser, FileText, Hash, House, Image, LogOut, Scissors, SquarePen, Users, Sparkles, Crown } from 'lucide-react'
+import { useUser, useClerk, useAuth } from '@clerk/clerk-react'
+import { Eraser, FileText, Hash, House, Image, LogOut, Scissors, SquarePen, Users, Crown } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 import axios from 'axios'
+
+axios.defaults.baseURL = import.meta.env.VITE_BASE_URL
 
 const navItems = [
   { to: '/ai', label: 'Dashboard', Icon: House, gradient: 'from-[#3C81F6] to-[#60a5fa]', glow: 'rgba(60,129,246,0.25)' },
