@@ -23,10 +23,14 @@ const allowedOrigins = [
 const corsOptions = {
     origin: function (origin, callback) {
         if (!origin) return callback(null, true);
-        if (allowedOrigins.indexOf(origin) !== -1 || process.env.CLIENT_URL === origin) {
+        if (
+            allowedOrigins.indexOf(origin) !== -1 ||
+            process.env.CLIENT_URL === origin ||
+            origin.endsWith('.vercel.app')
+        ) {
             callback(null, true);
         } else {
-            callback(null, true); // Allow all for now to debug
+            callback(null, true);
         }
     },
     credentials: true,
@@ -47,17 +51,19 @@ app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 app.use(clerkMiddleware())
 
-app.get('/', (_req, res) => res.send('Server is live!  '))
+app.get('/', (_req, res) => res.send('Server is live!'))
 
 app.use('/api/ai', aiRouter)
 app.use('/api/user', userRouter)
 
 const PORT = process.env.PORT || 3000;
 
-// For local development
-app.listen(PORT, () => {
-    console.log('Server is running on port', PORT|| 4000);
-});
+// For local development (only start listener if not running as a Vercel serverless function)
+if (!process.env.VERCEL) {
+    app.listen(PORT, () => {
+        console.log('Server is running on port', PORT);
+    });
+}
 
 // Export for Vercel serverless
 export default app;
