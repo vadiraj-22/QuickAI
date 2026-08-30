@@ -210,57 +210,67 @@ export const removeImageBackground = async (req, res) => {
             return res.json({ success: false, message: "No image provided. Please upload an image file." });
         }
 
-        // Get current usage count for background removal
-        const user = await clerkClient.users.getUser(userId);
-        const bgRemovalUsage = user.privateMetadata?.bg_removal_usage || 0;
+        const user = req.user || await clerkClient.users.getUser(userId);
+        const bgRemovalUsage = user?.privateMetadata?.bg_removal_usage || 0;
 
-        // Check if free user has reached the 5 usage limit
         if (plan !== 'premium' && bgRemovalUsage >= 5) {
-            return res.json({ success: false, message: "You've reached your free limit of 5 background removals. Upgrade to premium for unlimited usage." })
+            return res.json({ success: false, message: "You've reached your free limit of 5 background removals. Upgrade to premium for unlimited usage." });
         }
 
-        // Upload image first without transformation
-        const uploadResult = await cloudinary.uploader.upload(image.path, {
-            resource_type: 'image'
-        })
+        const fileBuffer = fs.readFileSync(image.path);
+        const formData = new FormData();
+        formData.append('image_file', fileBuffer, {
+            filename: image.originalname || 'image.png',
+            contentType: image.mimetype || 'image/png'
+        });
 
-        // Generate URL with background removal transformation
-        const imageUrl = cloudinary.url(uploadResult.public_id, {
-            transformation: [
-                {
-                    effect: 'background_removal',
-                    background_removal: 'remove_the_background'
-                }
-            ],
-            resource_type: 'image',
-            secure: true
-        })
+        // Use ClipDrop background removal API
+        const response = await axios.post("https://clipdrop-api.co/remove-background/v1", formData, {
+            headers: {
+                'x-api-key': process.env.CLIPDROP_API_KEY?.trim(),
+                ...formData.getHeaders()
+            },
+            responseType: "arraybuffer"
+        });
 
-        // Cleanup local temp file if exists
+        const base64Image = `data:image/png;base64,${Buffer.from(response.data).toString('base64')}`;
+        const { secure_url } = await cloudinary.uploader.upload(base64Image);
+
+        // Cleanup local temp file
         try { if (image.path && fs.existsSync(image.path)) fs.unlinkSync(image.path); } catch (e) {}
 
-        await sql`INSERT into creations (user_id ,prompt , content ,type )
-        values(${userId},'Remove background from the image', ${imageUrl},'image')`;
+        await sql`INSERT into creations (user_id, prompt, content, type)
+        values(${userId}, 'Remove background from the image', ${secure_url}, 'image')`;
 
-        // Increment usage counter for free users
         const newUsage = bgRemovalUsage + 1;
         if (plan !== 'premium') {
             await clerkClient.users.updateUserMetadata(userId, {
                 privateMetadata: {
+                    ...user?.privateMetadata,
                     bg_removal_usage: newUsage
                 }
-            })
+            });
         }
 
         res.json({
             success: true,
-            content: imageUrl,
-            usageLeft: plan === 'premium' ? 'unlimited' : 5 - newUsage
-        })
+            content: secure_url,
+            usageLeft: plan === 'premium' ? 'unlimited' : Math.max(0, 5 - newUsage)
+        });
 
     } catch (error) {
-        console.error('Error removing background:', error.message);
-        res.json({ success: false, message: error.message || "Failed to remove background" })
+        let errorMsg = error.message;
+        if (error.response?.data) {
+            try {
+                const decoded = JSON.parse(Buffer.from(error.response.data).toString());
+                errorMsg = decoded.error || decoded.message || errorMsg;
+            } catch (e) {
+                const text = Buffer.from(error.response.data).toString();
+                if (text && text.length < 200) errorMsg = text;
+            }
+        }
+        console.error('Error removing background:', errorMsg);
+        res.json({ success: false, message: errorMsg || "Failed to remove background" });
     }
 }
 
@@ -288,15 +298,12 @@ export const removeImageObject = async (req, res) => {
             return res.json({ success: false, message: "You've reached your free limit of 5 object removals. Upgrade to premium for unlimited usage." })
         }
 
-        const { public_id } = await cloudinary.uploader.upload(image.path)
         const { public_id } = await cloudinary.uploader.upload(image.path, {
             resource_type: 'image'
         })
 
         const cleanObject = object.trim();
         const imageUrl = cloudinary.url(public_id, {
-            transformation: [{ effect: `gen_remove:${object}` }],
-            resource_type: 'image'
             transformation: [{ effect: `gen_remove:prompt=${cleanObject}` }],
             resource_type: 'image',
             secure: true
@@ -306,7 +313,6 @@ export const removeImageObject = async (req, res) => {
         try { if (image.path && fs.existsSync(image.path)) fs.unlinkSync(image.path); } catch (e) {}
 
         await sql`INSERT into creations (user_id ,prompt , content ,type )
-        values(${userId}, ${`Remove ${object} from the image`}, ${imageUrl},'image')`;
         values(${userId}, ${`Remove ${cleanObject} from the image`}, ${imageUrl},'image')`;
 
         // Increment usage counter for free users
@@ -387,7 +393,6 @@ export const resumeReview = async (req, res) => {
 
     } catch (error) {
         console.error('Error in resume review:', error);
-        let message = "Failed to review resume. Please try again.";
         let message = error.message || "Failed to review resume. Please try again.";
 
         if (error.message?.includes('429') || error.message?.includes('Too Many Requests')) {

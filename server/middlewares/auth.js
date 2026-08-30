@@ -26,10 +26,15 @@ export const auth = async (req, res, next) => {
                 }
             }
         } catch (e) {
-            console.error("Error checking Clerk Billing subscription:", e.message);
+            // Billing not configured or ignored
         }
 
-        const user = await clerkClient.users.getUser(userId);
+        let user;
+        try {
+            user = await clerkClient.users.getUser(userId);
+        } catch (e) {
+            return res.status(401).json({ success: false, message: "User session expired or not found" });
+        }
 
         // 2. Fallback check on user metadata
         if (!isPremiumPlan) {
@@ -39,26 +44,13 @@ export const auth = async (req, res, next) => {
                 user.unsafeMetadata?.plan === 'premium';
         }
 
-        let needsUpdate = false;
-        const newPrivate = { ...user.privateMetadata };
-        const newPublic = { ...user.publicMetadata };
-
-        if (newPrivate.free_usage === undefined) {
-            newPrivate.free_usage = 0;
-            needsUpdate = true;
-        }
-
-        if (needsUpdate) {
-            await clerkClient.users.updateUserMetadata(userId, {
-                privateMetadata: newPrivate,
-            });
-        }
-
+        req.user = user;
         req.userId = userId;
-        req.free_usage = newPrivate.free_usage || 0;
+        req.free_usage = user.privateMetadata?.free_usage || 0;
         req.plan = isPremiumPlan ? 'premium' : 'free';
         next();
     } catch (error) {
-        res.json({ success: false, message: error.message });
+        console.error("Auth Middleware Error:", error.message);
+        res.status(500).json({ success: false, message: error.message });
     }
 };

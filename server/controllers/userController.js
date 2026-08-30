@@ -35,29 +35,30 @@ export const getUserCreations = async(req , res)=>{
   export const getUsageData = async(req , res)=>{ 
     try {
         const userId = getUserId(req);
-        const plan = req.plan
-        const free_usage = req.free_usage
+        const plan = req.plan || 'free';
+        const free_usage = req.free_usage || 0;
         
-        // Get usage data for background, object removal, and resume review
-        const user = await clerkClient.users.getUser(userId);
-        const bgRemovalUsage = user.privateMetadata?.bg_removal_usage || 0;
-        const objRemovalUsage = user.privateMetadata?.obj_removal_usage || 0;
-        const resumeReviewUsage = user.privateMetadata?.resume_review_usage || 0;
+        // Use user object from auth middleware or fetch safely
+        const user = req.user || (userId ? await clerkClient.users.getUser(userId) : null);
+        const bgRemovalUsage = user?.privateMetadata?.bg_removal_usage || 0;
+        const objRemovalUsage = user?.privateMetadata?.obj_removal_usage || 0;
+        const resumeReviewUsage = user?.privateMetadata?.resume_review_usage || 0;
         
         res.json({
             success: true, 
-            usageCount: free_usage || 0,
+            usageCount: free_usage,
             bgRemovalUsage: bgRemovalUsage,
-            bgRemovalLeft: plan === 'premium' ? 'unlimited' : 5 - bgRemovalUsage,
+            bgRemovalLeft: plan === 'premium' ? 'unlimited' : Math.max(0, 5 - bgRemovalUsage),
             objRemovalUsage: objRemovalUsage,
-            objRemovalLeft: plan === 'premium' ? 'unlimited' : 5 - objRemovalUsage,
+            objRemovalLeft: plan === 'premium' ? 'unlimited' : Math.max(0, 5 - objRemovalUsage),
             resumeReviewUsage: resumeReviewUsage,
-            resumeReviewLeft: plan === 'premium' ? 'unlimited' : 10 - resumeReviewUsage,
+            resumeReviewLeft: plan === 'premium' ? 'unlimited' : Math.max(0, 10 - resumeReviewUsage),
             isPremium: plan === 'premium'
         });
 
     } catch (error) {
-        res.json({success: false, message:error.message});
+        console.error("getUsageData error:", error);
+        res.json({success: false, message: error.message});
     }
   }
 
