@@ -33,15 +33,14 @@ const WriteArticle = () => {
         { prompt: input, length: selectedLength.length },
         { headers: { Authorization: `Bearer ${await getToken()}` } }
       )
-      if (data.success) {
+      if (data && data.success) {
         setContent(data.content)
-        setLoading(false)
       } else {
-        toast.error(data.message)
-        setLoading(false)
+        toast.error(data?.message || 'Failed to generate article')
       }
     } catch (error) {
-      toast.error(error.message)
+      toast.error(error.response?.data?.message || error.message || 'Server error occurred')
+    } finally {
       setLoading(false)
     }
   }

@@ -62,15 +62,15 @@ const GenerateImages = () => {
       const { data } = await axios.post('/api/ai/generate-image', { prompt, publish }, {
         headers: { Authorization: `Bearer ${await getToken()}` },
       })
-      if (data.success) {
+      if (data && data.success) {
         if (!effectiveIsPremium) setUsageCount(prev => prev + 1)
         setContent(data.content)
       } else {
-        toast.error(data.message)
-        setLoading(false)
+        toast.error(data?.message || 'Failed to generate image')
       }
     } catch (error) {
-      toast.error(error.message)
+      toast.error(error.response?.data?.message || error.message || 'Server error occurred')
+    } finally {
       setLoading(false)
     }
   }

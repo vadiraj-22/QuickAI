@@ -50,16 +50,15 @@ const ReviewResume = () => {
       const { data } = await axios.post('/api/ai/resume-review', formData, {
         headers: { Authorization: `Bearer ${await getToken()}` },
       })
-      if (data.success) {
+      if (data && data.success) {
         if (!effectiveIsPremium) setResumeReviewUsage(prev => prev + 1)
         setContent(data.content)
-        setLoading(false)
       } else {
-        toast.error(data.message)
-        setLoading(false)
+        toast.error(data?.message || 'Failed to review resume')
       }
     } catch (error) {
-      toast.error(error.message)
+      toast.error(error.response?.data?.message || error.message || 'Server error occurred')
+    } finally {
       setLoading(false)
     }
   }

@@ -67,15 +67,15 @@ const RemoveBackground = () => {
       const { data } = await axios.post('/api/ai/remove-image-background', formData, {
         headers: { Authorization: `Bearer ${await getToken()}` },
       })
-      if (data.success) {
+      if (data && data.success) {
         if (!effectiveIsPremium) setBgRemovalUsage(prev => prev + 1)
         setContent(data.content)
       } else {
-        toast.error(data.message)
-        setLoading(false)
+        toast.error(data?.message || 'Failed to remove background')
       }
     } catch (error) {
-      toast.error(error.message)
+      toast.error(error.response?.data?.message || error.message || 'Server error occurred')
+    } finally {
       setLoading(false)
     }
   }

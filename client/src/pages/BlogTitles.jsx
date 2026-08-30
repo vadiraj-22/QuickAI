@@ -28,15 +28,14 @@ const BlogTitles = () => {
       const { data } = await axios.post('/api/ai/generate-blog-title', { prompt }, {
         headers: { Authorization: `Bearer ${await getToken()}` },
       })
-      if (data.success) {
+      if (data && data.success) {
         setContent(data.content)
-        setLoading(false)
       } else {
-        toast.error(data.message)
-        setLoading(false)
+        toast.error(data?.message || 'Failed to generate blog titles')
       }
     } catch (error) {
-      toast.error(error.message)
+      toast.error(error.response?.data?.message || error.message || 'Server error occurred')
+    } finally {
       setLoading(false)
     }
   }
