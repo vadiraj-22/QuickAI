@@ -6,7 +6,7 @@ import CreationItem from '../components/CreationItem'
 import axios from 'axios'
 import toast from 'react-hot-toast'
 
-axios.defaults.baseURL = import.meta.env.VITE_BASE_URL
+axios.defaults.baseURL = import.meta.env.VITE_BASE_URL || 'https://quick-ai-backend-mu-nine.vercel.app'
 
 const StatCard = ({ label, value, icon: Icon, gradient, glow }) => (
   <div

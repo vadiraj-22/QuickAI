@@ -4,7 +4,7 @@ import { Eraser, FileText, Hash, House, Image, LogOut, Scissors, SquarePen, User
 import { NavLink } from 'react-router-dom'
 import axios from 'axios'
 
-axios.defaults.baseURL = import.meta.env.VITE_BASE_URL
+axios.defaults.baseURL = import.meta.env.VITE_BASE_URL || 'https://quick-ai-backend-mu-nine.vercel.app'
 
 const navItems = [
   { to: '/ai', label: 'Dashboard', Icon: House, gradient: 'from-[#3C81F6] to-[#60a5fa]', glow: 'rgba(60,129,246,0.25)' },

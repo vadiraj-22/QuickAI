@@ -9,6 +9,10 @@
       "destination": "/api/clerk-proxy?path=/$1"
     },
     {
+      "source": "/api/(.*)",
+      "destination": "https://quick-ai-backend-mu-nine.vercel.app/api/$1"
+    },
+    {
       "source": "/(.*)",
       "destination": "/"
     }

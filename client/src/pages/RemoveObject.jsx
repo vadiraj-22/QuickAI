@@ -18,7 +18,7 @@ async function downloadImage(url, filename = 'object-removed.png') {
   window.URL.revokeObjectURL(blobUrl)
 }
 
-axios.defaults.baseURL = import.meta.env.VITE_BASE_URL
+axios.defaults.baseURL = import.meta.env.VITE_BASE_URL || 'https://quick-ai-backend-mu-nine.vercel.app'
 const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png']
 
 const ACCENT = '#4A7AFF'
@@ -70,17 +70,26 @@ const RemoveObject = () => {
       const formData = new FormData()
       formData.append('image', input)
       formData.append('object', object)
+      const token = await getToken()
       const { data } = await axios.post('/api/ai/remove-image-object', formData, {
-        headers: { Authorization: `Bearer ${await getToken()}` },
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        },
       })
       if (data && data.success) {
         if (!effectiveIsPremium) setObjRemovalUsage(prev => prev + 1)
         setContent(data.content)
       } else {
-        toast.error(data?.message || 'Failed to remove object')
+        const msg = (typeof data === 'string' && data.includes('<!doctype'))
+          ? 'Backend returned HTML. Check API configuration.'
+          : (data?.message || 'Failed to remove object')
+        toast.error(msg)
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || error.message || 'Server error occurred')
+      console.error('Remove Object Error:', error.response?.data || error)
+      const msg = error.response?.data?.message || error.message || 'Server error occurred'
+      toast.error(msg)
     } finally {
       setLoading(false)
     }

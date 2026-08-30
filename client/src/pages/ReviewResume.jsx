@@ -6,7 +6,7 @@ import toast from 'react-hot-toast'
 import Markdown from 'react-markdown'
 import LoadingOverlay, { PIPELINE_MESSAGES } from '../components/LoadingOverlay'
 
-axios.defaults.baseURL = import.meta.env.VITE_BASE_URL
+axios.defaults.baseURL = import.meta.env.VITE_BASE_URL || 'https://quick-ai-backend-mu-nine.vercel.app'
 
 const ACCENT = '#00DA83'
 const ACCENT_GLOW = 'rgba(0,218,131,0.2)'
@@ -47,17 +47,26 @@ const ReviewResume = () => {
       setLoading(true)
       const formData = new FormData()
       formData.append('resume', input)
+      const token = await getToken()
       const { data } = await axios.post('/api/ai/resume-review', formData, {
-        headers: { Authorization: `Bearer ${await getToken()}` },
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        },
       })
       if (data && data.success) {
         if (!effectiveIsPremium) setResumeReviewUsage(prev => prev + 1)
         setContent(data.content)
       } else {
-        toast.error(data?.message || 'Failed to review resume')
+        const msg = (typeof data === 'string' && data.includes('<!doctype'))
+          ? 'Backend returned HTML. Check API configuration.'
+          : (data?.message || 'Failed to review resume')
+        toast.error(msg)
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || error.message || 'Server error occurred')
+      console.error('Review Resume Error:', error.response?.data || error)
+      const msg = error.response?.data?.message || error.message || 'Server error occurred'
+      toast.error(msg)
     } finally {
       setLoading(false)
     }

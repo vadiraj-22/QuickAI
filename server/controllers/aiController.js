@@ -3,7 +3,6 @@ import sql from "../configs/db.js";
 import { clerkClient } from "@clerk/express";
 import FormData from 'form-data';
 import axios from 'axios';
-import fs from 'fs'
 import pdf from 'pdf-parse/lib/pdf-parse.js'
 import { v2 as cloudinary } from 'cloudinary'
 
@@ -18,8 +17,8 @@ if (!apiKey) {
 const genAI = new GoogleGenerativeAI(apiKey);
 
 // Helper function to get model instance (can be easily changed centrally)
-// Using gemini-2.5-flash - latest stable model with good free tier limits
-const getModel = () => genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+// Using gemini-1.5-flash - fast, stable model with generous limits
+const getModel = (modelName = "gemini-1.5-flash") => genAI.getGenerativeModel({ model: modelName });
 
 // Helper function for exponential backoff retry logic
 const generateWithRetry = async (operation, maxRetries = 5) => {
@@ -227,7 +226,7 @@ export const removeImageBackground = async (req, res) => {
         const image = req.file;
         const plan = req.plan;
 
-        if (!image) {
+        if (!image || !image.buffer) {
             return res.json({ success: false, message: "No image provided. Please upload an image file." });
         }
 
@@ -238,9 +237,8 @@ export const removeImageBackground = async (req, res) => {
             return res.json({ success: false, message: "You've reached your free limit of 5 background removals. Upgrade to premium for unlimited usage." });
         }
 
-        const fileBuffer = fs.readFileSync(image.path);
         const formData = new FormData();
-        formData.append('image_file', fileBuffer, {
+        formData.append('image_file', image.buffer, {
             filename: image.originalname || 'image.png',
             contentType: image.mimetype || 'image/png'
         });
@@ -255,10 +253,9 @@ export const removeImageBackground = async (req, res) => {
         });
 
         const base64Image = `data:image/png;base64,${Buffer.from(response.data).toString('base64')}`;
-        const { secure_url } = await cloudinary.uploader.upload(base64Image);
-
-        // Cleanup local temp file
-        try { if (image.path && fs.existsSync(image.path)) fs.unlinkSync(image.path); } catch (e) {}
+        const { secure_url } = await cloudinary.uploader.upload(base64Image, {
+            folder: 'quick-ai-bg-removed'
+        });
 
         await sql`INSERT into creations (user_id, prompt, content, type)
         values(${userId}, 'Remove background from the image', ${secure_url}, 'image')`;
@@ -302,7 +299,7 @@ export const removeImageObject = async (req, res) => {
         const plan = req.plan;
         const { object } = req.body;
 
-        if (!image) {
+        if (!image || !image.buffer) {
             return res.json({ success: false, message: "No image provided. Please upload an image." });
         }
 
@@ -319,9 +316,11 @@ export const removeImageObject = async (req, res) => {
             return res.json({ success: false, message: "You've reached your free limit of 5 object removals. Upgrade to premium for unlimited usage." })
         }
 
-        const { public_id } = await cloudinary.uploader.upload(image.path, {
-            resource_type: 'image'
-        })
+        const base64DataUri = `data:${image.mimetype || 'image/png'};base64,${image.buffer.toString('base64')}`;
+        const { public_id } = await cloudinary.uploader.upload(base64DataUri, {
+            resource_type: 'image',
+            folder: 'quick-ai-obj-removal'
+        });
 
         const cleanObject = object.trim();
         const imageUrl = cloudinary.url(public_id, {
@@ -329,9 +328,6 @@ export const removeImageObject = async (req, res) => {
             resource_type: 'image',
             secure: true
         })
-
-        // Cleanup local temp file if exists
-        try { if (image.path && fs.existsSync(image.path)) fs.unlinkSync(image.path); } catch (e) {}
 
         await sql`INSERT into creations (user_id ,prompt , content ,type )
         values(${userId}, ${`Remove ${cleanObject} from the image`}, ${imageUrl},'image')`;
@@ -364,7 +360,7 @@ export const resumeReview = async (req, res) => {
         const resume = req.file;
         const plan = req.plan;
 
-        if (!resume) {
+        if (!resume || !resume.buffer) {
             return res.json({ success: false, message: "No resume provided. Please upload a PDF resume." });
         }
 
@@ -381,11 +377,7 @@ export const resumeReview = async (req, res) => {
             return res.json({ success: false, message: "Resume file size exceeds allowed size (5MB)." })
         }
 
-        const dataBuffer = fs.readFileSync(resume.path)
-        const pdfData = await pdf(dataBuffer)
-
-        // Cleanup local temp file
-        try { if (resume.path && fs.existsSync(resume.path)) fs.unlinkSync(resume.path); } catch (e) {}
+        const pdfData = await pdf(resume.buffer)
 
         const prompt = `Review the following resume and provide the constructive feedback on its strengths, weeknesses, and areas for improvement . Resume content :\n\n${pdfData.text}`;
 

@@ -18,7 +18,7 @@ async function downloadImage(url, filename = 'image.png') {
   window.URL.revokeObjectURL(blobUrl)
 }
 
-axios.defaults.baseURL = import.meta.env.VITE_BASE_URL
+axios.defaults.baseURL = import.meta.env.VITE_BASE_URL || 'https://quick-ai-backend-mu-nine.vercel.app'
 
 const ACCENT = '#00AD25'
 const ACCENT_GLOW = 'rgba(0,173,37,0.2)'
@@ -59,17 +59,23 @@ const GenerateImages = () => {
     try {
       setLoading(true)
       const prompt = `Generate an Image of ${input} in the style ${selectedStyle}`
+      const token = await getToken()
       const { data } = await axios.post('/api/ai/generate-image', { prompt, publish }, {
-        headers: { Authorization: `Bearer ${await getToken()}` },
+        headers: { Authorization: `Bearer ${token}` },
       })
       if (data && data.success) {
         if (!effectiveIsPremium) setUsageCount(prev => prev + 1)
         setContent(data.content)
       } else {
-        toast.error(data?.message || 'Failed to generate image')
+        const msg = (typeof data === 'string' && data.includes('<!doctype'))
+          ? 'Backend returned HTML. Check API configuration.'
+          : (data?.message || 'Failed to generate image')
+        toast.error(msg)
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || error.message || 'Server error occurred')
+      console.error('Generate Image Error:', error.response?.data || error)
+      const msg = error.response?.data?.message || error.message || 'Server error occurred'
+      toast.error(msg)
     } finally {
       setLoading(false)
     }

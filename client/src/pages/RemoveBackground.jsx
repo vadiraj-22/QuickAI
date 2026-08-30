@@ -18,7 +18,7 @@ async function downloadImage(url, filename = 'image.png') {
   window.URL.revokeObjectURL(blobUrl)
 }
 
-axios.defaults.baseURL = import.meta.env.VITE_BASE_URL
+axios.defaults.baseURL = import.meta.env.VITE_BASE_URL || 'https://quick-ai-backend-mu-nine.vercel.app'
 const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png']
 
 const ACCENT = '#FF4938'
@@ -64,17 +64,26 @@ const RemoveBackground = () => {
       setLoading(true)
       const formData = new FormData()
       formData.append('image', input)
+      const token = await getToken()
       const { data } = await axios.post('/api/ai/remove-image-background', formData, {
-        headers: { Authorization: `Bearer ${await getToken()}` },
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        },
       })
       if (data && data.success) {
         if (!effectiveIsPremium) setBgRemovalUsage(prev => prev + 1)
         setContent(data.content)
       } else {
-        toast.error(data?.message || 'Failed to remove background')
+        const msg = (typeof data === 'string' && data.includes('<!doctype')) 
+          ? 'Backend returned HTML. Check API configuration.' 
+          : (data?.message || 'Failed to remove background')
+        toast.error(msg)
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || error.message || 'Server error occurred')
+      console.error('Remove Background Error:', error.response?.data || error)
+      const msg = error.response?.data?.message || error.message || 'Server error occurred'
+      toast.error(msg)
     } finally {
       setLoading(false)
     }
