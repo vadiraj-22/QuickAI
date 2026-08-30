@@ -2,14 +2,6 @@
   "version": 2,
   "rewrites": [
     {
-      "source": "/__clerk",
-      "destination": "https://bright-basilisk-76.clerk.accounts.dev"
-    },
-    {
-      "source": "/__clerk/(.*)",
-      "destination": "https://bright-basilisk-76.clerk.accounts.dev/$1"
-    },
-    {
       "source": "/api/(.*)",
       "destination": "https://quickaibackend-five.vercel.app/api/$1"
     },
