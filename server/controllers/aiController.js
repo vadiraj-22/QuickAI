@@ -161,23 +161,41 @@ export const generateImage = async (req, res) => {
         const plan = req.plan;
         const free_usage = req.free_usage;
 
+        if (!prompt || !prompt.trim()) {
+            return res.json({ success: false, message: "Please provide a prompt for image generation." });
+        }
+
+        if (!process.env.CLIPDROP_API_KEY) {
+            return res.json({ success: false, message: "CLIPDROP_API_KEY is not configured on the server." });
+        }
+
         // Check if free user has reached the 5 image limit
         if (plan !== 'premium' && free_usage >= 5) {
             return res.json({ success: false, message: "You've reached your free limit of 5 images. Upgrade to premium for unlimited image generation." })
+            return res.json({ success: false, message: "You've reached your free limit of 5 images. Upgrade to premium for unlimited image generation." });
         }
 
         const formData = new FormData()
         formData.append('prompt', prompt)
+        const formData = new FormData();
+        formData.append('prompt', prompt.trim());
 
         // Note: Using ClipDrop for images, not Gemini
+        // Call ClipDrop text-to-image with proper multipart headers
         const response = await axios.post("https://clipdrop-api.co/text-to-image/v1", formData, {
             headers: { 'x-api-key': process.env.CLIPDROP_API_KEY },
+            headers: {
+                'x-api-key': process.env.CLIPDROP_API_KEY.trim(),
+                ...formData.getHeaders()
+            },
             responseType: "arraybuffer",
         });
 
         const base64Image = `data:image/png;base64,${Buffer.from(response.data, 'binary').toString('base64')}`;
+        const base64Image = `data:image/png;base64,${Buffer.from(response.data).toString('base64')}`;
 
         const { secure_url } = await cloudinary.uploader.upload(base64Image)
+        const { secure_url } = await cloudinary.uploader.upload(base64Image);
 
         await sql`INSERT into creations (user_id ,prompt , content ,type ,publish)
         values(${userId},${prompt}, ${secure_url},'image',${publish ?? false})`;
@@ -189,13 +207,27 @@ export const generateImage = async (req, res) => {
                     free_usage: free_usage + 1
                 }
             })
+            });
         }
 
         res.json({ success: true, content: secure_url })
+        res.json({ success: true, content: secure_url });
 
     } catch (error) {
         console.error('Error generating image:', error.message);
         res.json({ success: false, message: error.message || "Failed to generate image" })
+        let errorMsg = error.message;
+        if (error.response?.data) {
+            try {
+                const decoded = JSON.parse(Buffer.from(error.response.data).toString());
+                errorMsg = decoded.error || decoded.message || errorMsg;
+            } catch (e) {
+                const text = Buffer.from(error.response.data).toString();
+                if (text && text.length < 200) errorMsg = text;
+            }
+        }
+        console.error('Error generating image:', errorMsg);
+        res.json({ success: false, message: errorMsg || "Failed to generate image" });
     }
 }
 
