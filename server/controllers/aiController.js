@@ -166,12 +166,23 @@ export const generateImage = async (req, res) => {
             return res.json({ success: false, message: "You've reached your free limit of 5 images. Upgrade to premium for unlimited image generation." })
         }
 
+        if (!process.env.CLIPDROP_API_KEY) {
+            return res.json({
+                success: false,
+                message: "CLIPDROP_API_KEY is not set in backend environment variables."
+            });
+        }
+
         const formData = new FormData()
         formData.append('prompt', prompt)
 
         // Note: Using ClipDrop for images, not Gemini
         const response = await axios.post("https://clipdrop-api.co/text-to-image/v1", formData, {
             headers: { 'x-api-key': process.env.CLIPDROP_API_KEY },
+            headers: {
+                'x-api-key': process.env.CLIPDROP_API_KEY.trim(),
+                ...formData.getHeaders()
+            },
             responseType: "arraybuffer",
         });
 
@@ -196,6 +207,18 @@ export const generateImage = async (req, res) => {
     } catch (error) {
         console.error('Error generating image:', error.message);
         res.json({ success: false, message: error.message || "Failed to generate image" })
+        let errorMsg = error.message;
+        if (error.response?.data) {
+            try {
+                const decoded = JSON.parse(Buffer.from(error.response.data).toString());
+                errorMsg = decoded.error || decoded.message || errorMsg;
+            } catch (e) {
+                const text = Buffer.from(error.response.data).toString();
+                if (text && text.length < 200) errorMsg = text;
+            }
+        }
+        console.error('Error generating image:', errorMsg);
+        res.json({ success: false, message: errorMsg || "Failed to generate image" })
     }
 }
 
