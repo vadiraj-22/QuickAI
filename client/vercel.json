@@ -1,19 +1,13 @@
 {
   "version": 2,
-  "functions": {
-    "api/clerk-proxy.js": {
-      "maxDuration": 60,
-      "memory": 1024
-    }
-  },
   "rewrites": [
     {
       "source": "/__clerk",
-      "destination": "/api/clerk-proxy?path=/"
+      "destination": "https://bright-basilisk-76.clerk.accounts.dev"
     },
     {
       "source": "/__clerk/(.*)",
-      "destination": "/api/clerk-proxy?path=/$1"
+      "destination": "https://bright-basilisk-76.clerk.accounts.dev/$1"
     },
     {
       "source": "/api/(.*)",
