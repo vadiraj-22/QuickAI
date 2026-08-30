@@ -4,6 +4,7 @@ import axios from 'axios'
 import { useAuth, useUser } from '@clerk/clerk-react'
 import toast from 'react-hot-toast'
 import LoadingOverlay, { PIPELINE_MESSAGES } from '../components/LoadingOverlay'
+import { handleApiError, handleApiResponse } from '../lib/errorHandler'
 
 async function downloadImage(url, filename = 'image.png') {
   const response = await fetch(url, { mode: 'cors' })
@@ -70,20 +71,15 @@ const RemoveBackground = () => {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
         },
+        timeout: 55000
       })
-      if (data && data.success) {
+      const result = handleApiResponse(data, 'Background Removal')
+      if (result.success) {
         if (!effectiveIsPremium) setBgRemovalUsage(prev => prev + 1)
-        setContent(data.content)
-      } else {
-        const msg = (typeof data === 'string' && data.includes('<!doctype')) 
-          ? 'Backend returned HTML. Check API configuration.' 
-          : (data?.message || 'Failed to remove background')
-        toast.error(msg)
+        setContent(result.content)
       }
     } catch (error) {
-      console.error('Remove Background Error:', error.response?.data || error)
-      const msg = error.response?.data?.message || error.message || 'Server error occurred'
-      toast.error(msg)
+      handleApiError(error, 'Background Removal')
     } finally {
       setLoading(false)
     }

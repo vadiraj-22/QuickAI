@@ -6,6 +6,8 @@ import toast from 'react-hot-toast'
 import Markdown from 'react-markdown'
 import LoadingOverlay, { PIPELINE_MESSAGES } from '../components/LoadingOverlay'
 
+import { handleApiError, handleApiResponse } from '../lib/errorHandler'
+
 axios.defaults.baseURL = import.meta.env.VITE_BASE_URL || 'https://quick-ai-backend-mu-nine.vercel.app'
 
 const ACCENT = '#4A7AFF'
@@ -32,20 +34,14 @@ const WriteArticle = () => {
       const { data } = await axios.post(
         '/api/ai/generate-article',
         { prompt: input, length: selectedLength.length },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` }, timeout: 55000 }
       )
-      if (data && data.success) {
-        setContent(data.content)
-      } else {
-        const msg = (typeof data === 'string' && data.includes('<!doctype'))
-          ? 'Backend returned HTML. Check API configuration.'
-          : (data?.message || 'Failed to generate article')
-        toast.error(msg)
+      const result = handleApiResponse(data, 'Article Generation')
+      if (result.success) {
+        setContent(result.content)
       }
     } catch (error) {
-      console.error('Write Article Error:', error.response?.data || error)
-      const msg = error.response?.data?.message || error.message || 'Server error occurred'
-      toast.error(msg)
+      handleApiError(error, 'Article Generation')
     } finally {
       setLoading(false)
     }

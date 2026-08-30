@@ -5,6 +5,8 @@ import { useAuth, useUser } from '@clerk/clerk-react'
 import toast from 'react-hot-toast'
 import LoadingOverlay, { PIPELINE_MESSAGES } from '../components/LoadingOverlay'
 
+import { handleApiError, handleApiResponse } from '../lib/errorHandler'
+
 async function downloadImage(url, filename = 'image.png') {
   const response = await fetch(url, { mode: 'cors' })
   const blob = await response.blob()
@@ -62,20 +64,15 @@ const GenerateImages = () => {
       const token = await getToken()
       const { data } = await axios.post('/api/ai/generate-image', { prompt, publish }, {
         headers: { Authorization: `Bearer ${token}` },
+        timeout: 55000
       })
-      if (data && data.success) {
+      const result = handleApiResponse(data, 'Image Generation')
+      if (result.success) {
         if (!effectiveIsPremium) setUsageCount(prev => prev + 1)
-        setContent(data.content)
-      } else {
-        const msg = (typeof data === 'string' && data.includes('<!doctype'))
-          ? 'Backend returned HTML. Check API configuration.'
-          : (data?.message || 'Failed to generate image')
-        toast.error(msg)
+        setContent(result.content)
       }
     } catch (error) {
-      console.error('Generate Image Error:', error.response?.data || error)
-      const msg = error.response?.data?.message || error.message || 'Server error occurred'
-      toast.error(msg)
+      handleApiError(error, 'Image Generation')
     } finally {
       setLoading(false)
     }

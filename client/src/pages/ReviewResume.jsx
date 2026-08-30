@@ -5,6 +5,7 @@ import { useAuth, useUser } from '@clerk/clerk-react'
 import toast from 'react-hot-toast'
 import Markdown from 'react-markdown'
 import LoadingOverlay, { PIPELINE_MESSAGES } from '../components/LoadingOverlay'
+import { handleApiError, handleApiResponse } from '../lib/errorHandler'
 
 axios.defaults.baseURL = import.meta.env.VITE_BASE_URL || 'https://quick-ai-backend-mu-nine.vercel.app'
 
@@ -53,20 +54,15 @@ const ReviewResume = () => {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
         },
+        timeout: 55000
       })
-      if (data && data.success) {
+      const result = handleApiResponse(data, 'Resume Review')
+      if (result.success) {
         if (!effectiveIsPremium) setResumeReviewUsage(prev => prev + 1)
-        setContent(data.content)
-      } else {
-        const msg = (typeof data === 'string' && data.includes('<!doctype'))
-          ? 'Backend returned HTML. Check API configuration.'
-          : (data?.message || 'Failed to review resume')
-        toast.error(msg)
+        setContent(result.content)
       }
     } catch (error) {
-      console.error('Review Resume Error:', error.response?.data || error)
-      const msg = error.response?.data?.message || error.message || 'Server error occurred'
-      toast.error(msg)
+      handleApiError(error, 'Resume Review')
     } finally {
       setLoading(false)
     }

@@ -6,6 +6,8 @@ import Markdown from 'react-markdown'
 import axios from 'axios'
 import LoadingOverlay, { PIPELINE_MESSAGES } from '../components/LoadingOverlay'
 
+import { handleApiError, handleApiResponse } from '../lib/errorHandler'
+
 axios.defaults.baseURL = import.meta.env.VITE_BASE_URL || 'https://quick-ai-backend-mu-nine.vercel.app'
 
 const ACCENT = '#8E37EB'
@@ -28,19 +30,14 @@ const BlogTitles = () => {
       const token = await getToken()
       const { data } = await axios.post('/api/ai/generate-blog-title', { prompt }, {
         headers: { Authorization: `Bearer ${token}` },
+        timeout: 55000
       })
-      if (data && data.success) {
-        setContent(data.content)
-      } else {
-        const msg = (typeof data === 'string' && data.includes('<!doctype'))
-          ? 'Backend returned HTML. Check API configuration.'
-          : (data?.message || 'Failed to generate blog titles')
-        toast.error(msg)
+      const result = handleApiResponse(data, 'Blog Title Generation')
+      if (result.success) {
+        setContent(result.content)
       }
     } catch (error) {
-      console.error('Blog Titles Error:', error.response?.data || error)
-      const msg = error.response?.data?.message || error.message || 'Server error occurred'
-      toast.error(msg)
+      handleApiError(error, 'Blog Title Generation')
     } finally {
       setLoading(false)
     }

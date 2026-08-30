@@ -4,6 +4,7 @@ import axios from 'axios'
 import { useAuth, useUser } from '@clerk/clerk-react'
 import toast from 'react-hot-toast'
 import LoadingOverlay, { PIPELINE_MESSAGES } from '../components/LoadingOverlay'
+import { handleApiError, handleApiResponse } from '../lib/errorHandler'
 
 async function downloadImage(url, filename = 'object-removed.png') {
   const response = await fetch(url, { mode: 'cors' })
@@ -76,20 +77,15 @@ const RemoveObject = () => {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
         },
+        timeout: 55000
       })
-      if (data && data.success) {
+      const result = handleApiResponse(data, 'Object Removal')
+      if (result.success) {
         if (!effectiveIsPremium) setObjRemovalUsage(prev => prev + 1)
-        setContent(data.content)
-      } else {
-        const msg = (typeof data === 'string' && data.includes('<!doctype'))
-          ? 'Backend returned HTML. Check API configuration.'
-          : (data?.message || 'Failed to remove object')
-        toast.error(msg)
+        setContent(result.content)
       }
     } catch (error) {
-      console.error('Remove Object Error:', error.response?.data || error)
-      const msg = error.response?.data?.message || error.message || 'Server error occurred'
-      toast.error(msg)
+      handleApiError(error, 'Object Removal')
     } finally {
       setLoading(false)
     }

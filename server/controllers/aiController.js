@@ -81,12 +81,12 @@ const generateWithFallbackAndRetry = async (promptText, maxRetries = 3) => {
 
             const isApiKeyInvalid = err.message?.includes('API_KEY_INVALID') || err.message?.includes('API key not valid');
             if (isApiKeyInvalid) {
-                throw new Error("Invalid or expired GEMINI_API_KEY. Please provide a valid Gemini API key in your server environment variables.");
+                throw new Error("Invalid or expired GEMINI_API_KEY. Please check your Google AI Studio API key.");
             }
 
             const isQuotaExceeded = err.message?.includes('Quota') || err.message?.includes('RESOURCE_EXHAUSTED');
             if (isQuotaExceeded) {
-                throw new Error("Gemini API quota exceeded. Please try again later or upgrade your Google AI plan.");
+                throw new Error("Gemini API quota exceeded for your Google account. Please upgrade or try again later.");
             }
 
             console.error(`Error with model '${modelName}':`, err.message);
@@ -123,34 +123,42 @@ export const generateArticle = async (req, res) => {
         const user = await getFullUser(req, userId);
 
         if (!prompt || !prompt.trim()) {
-            return res.json({ success: false, message: "Please provide a prompt/topic for the article." });
+            return res.status(400).json({ success: false, errorType: 'INVALID_INPUT', message: "Please provide a prompt or topic for the article." });
         }
 
         if (plan !== 'premium' && free_usage >= 10) {
-            return res.json({ success: false, message: "Free limit reached. Maximum usage limit is 10 articles." });
+            return res.status(403).json({ success: false, errorType: 'LIMIT_REACHED', message: "Free limit reached (10/10 articles). Upgrade to Premium for unlimited article writing." });
         }
 
         const fullPrompt = `Write a comprehensive, high quality article about "${prompt.trim()}". The article should be approximately ${length || 800} words long. Use clean markdown formatting with headers, bullet points, and paragraphs.`;
 
         const content = await generateWithFallbackAndRetry(fullPrompt);
 
-        await sql`INSERT into creations (user_id, prompt, content, type)
-        values(${userId}, ${prompt.trim()}, ${content}, 'article')`;
+        try {
+            await sql`INSERT into creations (user_id, prompt, content, type)
+            values(${userId}, ${prompt.trim()}, ${content}, 'article')`;
+        } catch (dbErr) {
+            console.error("Database save warning:", dbErr.message);
+        }
 
         if (plan !== 'premium' && userId) {
-            await clerkClient.users.updateUserMetadata(userId, {
-                privateMetadata: {
-                    ...user?.privateMetadata,
-                    free_usage: free_usage + 1
-                }
-            });
+            try {
+                await clerkClient.users.updateUserMetadata(userId, {
+                    privateMetadata: {
+                        ...user?.privateMetadata,
+                        free_usage: free_usage + 1
+                    }
+                });
+            } catch (clerkErr) {
+                console.error("Clerk metadata increment warning:", clerkErr.message);
+            }
         }
 
         res.json({ success: true, content });
 
     } catch (error) {
         console.error('Error generating article:', error);
-        res.json({ success: false, message: error.message || "Failed to generate article. Please try again." });
+        res.status(500).json({ success: false, errorType: 'GENERATION_ERROR', message: error.message || "Failed to generate article. Please try again." });
     }
 };
 
@@ -163,34 +171,42 @@ export const generateBlogTitle = async (req, res) => {
         const user = await getFullUser(req, userId);
 
         if (!prompt || !prompt.trim()) {
-            return res.json({ success: false, message: "Please provide a keyword or topic for blog titles." });
+            return res.status(400).json({ success: false, errorType: 'INVALID_INPUT', message: "Please provide a keyword or topic for blog titles." });
         }
 
         if (plan !== 'premium' && free_usage >= 10) {
-            return res.json({ success: false, message: "Free limit reached. Maximum usage limit is 10 title generations." });
+            return res.status(403).json({ success: false, errorType: 'LIMIT_REACHED', message: "Free limit reached (10/10 titles). Upgrade to Premium for unlimited title generation." });
         }
 
         const fullPrompt = `${prompt.trim()}. Return 5-10 catchy, SEO-optimized blog post titles formatted as a numbered markdown list.`;
 
         const content = await generateWithFallbackAndRetry(fullPrompt);
 
-        await sql`INSERT into creations (user_id, prompt, content, type)
-        values(${userId}, ${prompt.trim()}, ${content}, 'blog-title')`;
+        try {
+            await sql`INSERT into creations (user_id, prompt, content, type)
+            values(${userId}, ${prompt.trim()}, ${content}, 'blog-title')`;
+        } catch (dbErr) {
+            console.error("Database save warning:", dbErr.message);
+        }
 
         if (plan !== 'premium' && userId) {
-            await clerkClient.users.updateUserMetadata(userId, {
-                privateMetadata: {
-                    ...user?.privateMetadata,
-                    free_usage: free_usage + 1
-                }
-            });
+            try {
+                await clerkClient.users.updateUserMetadata(userId, {
+                    privateMetadata: {
+                        ...user?.privateMetadata,
+                        free_usage: free_usage + 1
+                    }
+                });
+            } catch (clerkErr) {
+                console.error("Clerk metadata increment warning:", clerkErr.message);
+            }
         }
 
         res.json({ success: true, content });
 
     } catch (error) {
         console.error('Error generating blog title:', error);
-        res.json({ success: false, message: error.message || "Failed to generate blog title. Please try again." });
+        res.status(500).json({ success: false, errorType: 'GENERATION_ERROR', message: error.message || "Failed to generate blog title. Please try again." });
     }
 };
 
@@ -203,58 +219,87 @@ export const generateImage = async (req, res) => {
         const user = await getFullUser(req, userId);
 
         if (!prompt || !prompt.trim()) {
-            return res.json({ success: false, message: "Please provide a prompt for image generation." });
+            return res.status(400).json({ success: false, errorType: 'INVALID_INPUT', message: "Please provide a description/prompt for image generation." });
         }
 
         if (!process.env.CLIPDROP_API_KEY) {
-            return res.json({ success: false, message: "CLIPDROP_API_KEY is not configured on the server." });
+            return res.status(500).json({ success: false, errorType: 'CONFIG_ERROR', message: "ClipDrop API key (CLIPDROP_API_KEY) is missing on the server." });
         }
 
         if (plan !== 'premium' && free_usage >= 5) {
-            return res.json({ success: false, message: "You've reached your free limit of 5 images. Upgrade to premium for unlimited image generation." });
+            return res.status(403).json({ success: false, errorType: 'LIMIT_REACHED', message: "You've reached your free limit of 5 images. Upgrade to Premium for unlimited image generation." });
         }
 
         const formData = new FormData();
         formData.append('prompt', prompt.trim());
 
-        const response = await axios.post("https://clipdrop-api.co/text-to-image/v1", formData, {
-            headers: {
-                'x-api-key': process.env.CLIPDROP_API_KEY.trim(),
-                ...formData.getHeaders()
-            },
-            responseType: "arraybuffer",
-        });
+        let clipdropResponse;
+        try {
+            clipdropResponse = await axios.post("https://clipdrop-api.co/text-to-image/v1", formData, {
+                headers: {
+                    'x-api-key': process.env.CLIPDROP_API_KEY.trim(),
+                    ...formData.getHeaders()
+                },
+                responseType: "arraybuffer",
+                timeout: 50000
+            });
+        } catch (clipErr) {
+            let detail = clipErr.message;
+            if (clipErr.response?.data) {
+                try {
+                    const parsed = JSON.parse(Buffer.from(clipErr.response.data).toString());
+                    detail = parsed.error || parsed.message || detail;
+                } catch (_) {
+                    const txt = Buffer.from(clipErr.response.data).toString();
+                    if (txt && txt.length < 200) detail = txt;
+                }
+            }
+            if (clipErr.response?.status === 402) {
+                return res.status(402).json({ success: false, errorType: 'CREDITS_DEPLETED', message: "ClipDrop API credits depleted. Please top up your ClipDrop account credits." });
+            }
+            if (clipErr.response?.status === 429) {
+                return res.status(429).json({ success: false, errorType: 'RATE_LIMIT', message: "ClipDrop API rate limit exceeded. Please wait a few seconds and try again." });
+            }
+            return res.status(502).json({ success: false, errorType: 'CLIPDROP_ERROR', message: `ClipDrop Image Generation Error: ${detail}` });
+        }
 
-        const base64Image = `data:image/png;base64,${Buffer.from(response.data).toString('base64')}`;
-        const { secure_url } = await cloudinary.uploader.upload(base64Image);
+        const base64Image = `data:image/png;base64,${Buffer.from(clipdropResponse.data).toString('base64')}`;
 
-        await sql`INSERT into creations (user_id, prompt, content, type, publish)
-        values(${userId}, ${prompt.trim()}, ${secure_url}, 'image', ${publish ?? false})`;
+        let secure_url;
+        try {
+            const uploadResult = await cloudinary.uploader.upload(base64Image, {
+                folder: 'quick-ai-images'
+            });
+            secure_url = uploadResult.secure_url;
+        } catch (cloudErr) {
+            return res.status(502).json({ success: false, errorType: 'CLOUDINARY_ERROR', message: `Cloudinary Image Upload Failed: ${cloudErr.message}` });
+        }
+
+        try {
+            await sql`INSERT into creations (user_id, prompt, content, type, publish)
+            values(${userId}, ${prompt.trim()}, ${secure_url}, 'image', ${publish ?? false})`;
+        } catch (dbErr) {
+            console.error("Database save warning:", dbErr.message);
+        }
 
         if (plan !== 'premium' && userId) {
-            await clerkClient.users.updateUserMetadata(userId, {
-                privateMetadata: {
-                    ...user?.privateMetadata,
-                    free_usage: free_usage + 1
-                }
-            });
+            try {
+                await clerkClient.users.updateUserMetadata(userId, {
+                    privateMetadata: {
+                        ...user?.privateMetadata,
+                        free_usage: free_usage + 1
+                    }
+                });
+            } catch (clerkErr) {
+                console.error("Clerk metadata increment warning:", clerkErr.message);
+            }
         }
 
         res.json({ success: true, content: secure_url });
 
     } catch (error) {
-        let errorMsg = error.message;
-        if (error.response?.data) {
-            try {
-                const decoded = JSON.parse(Buffer.from(error.response.data).toString());
-                errorMsg = decoded.error || decoded.message || errorMsg;
-            } catch (e) {
-                const text = Buffer.from(error.response.data).toString();
-                if (text && text.length < 200) errorMsg = text;
-            }
-        }
-        console.error('Error generating image:', errorMsg);
-        res.json({ success: false, message: errorMsg || "Failed to generate image" });
+        console.error('Error generating image:', error);
+        res.status(500).json({ success: false, errorType: 'SERVER_ERROR', message: error.message || "Failed to generate image." });
     }
 };
 
@@ -266,13 +311,17 @@ export const removeImageBackground = async (req, res) => {
         const user = await getFullUser(req, userId);
 
         if (!image || !image.buffer) {
-            return res.json({ success: false, message: "No image provided. Please upload an image file." });
+            return res.status(400).json({ success: false, errorType: 'INVALID_INPUT', message: "No image provided. Please upload an image file (JPG/PNG)." });
+        }
+
+        if (!process.env.CLIPDROP_API_KEY) {
+            return res.status(500).json({ success: false, errorType: 'CONFIG_ERROR', message: "ClipDrop API key is not configured on the server." });
         }
 
         const bgRemovalUsage = user?.privateMetadata?.bg_removal_usage || 0;
 
         if (plan !== 'premium' && bgRemovalUsage >= 5) {
-            return res.json({ success: false, message: "You've reached your free limit of 5 background removals. Upgrade to premium for unlimited usage." });
+            return res.status(403).json({ success: false, errorType: 'LIMIT_REACHED', message: "You've reached your free limit of 5 background removals. Upgrade to Premium for unlimited removals." });
         }
 
         const formData = new FormData();
@@ -281,30 +330,64 @@ export const removeImageBackground = async (req, res) => {
             contentType: image.mimetype || 'image/png'
         });
 
-        const response = await axios.post("https://clipdrop-api.co/remove-background/v1", formData, {
-            headers: {
-                'x-api-key': process.env.CLIPDROP_API_KEY?.trim(),
-                ...formData.getHeaders()
-            },
-            responseType: "arraybuffer"
-        });
+        let response;
+        try {
+            response = await axios.post("https://clipdrop-api.co/remove-background/v1", formData, {
+                headers: {
+                    'x-api-key': process.env.CLIPDROP_API_KEY?.trim(),
+                    ...formData.getHeaders()
+                },
+                responseType: "arraybuffer",
+                timeout: 50000
+            });
+        } catch (clipErr) {
+            let detail = clipErr.message;
+            if (clipErr.response?.data) {
+                try {
+                    const parsed = JSON.parse(Buffer.from(clipErr.response.data).toString());
+                    detail = parsed.error || parsed.message || detail;
+                } catch (_) {
+                    const txt = Buffer.from(clipErr.response.data).toString();
+                    if (txt && txt.length < 200) detail = txt;
+                }
+            }
+            if (clipErr.response?.status === 402) {
+                return res.status(402).json({ success: false, errorType: 'CREDITS_DEPLETED', message: "ClipDrop credits depleted for background removal." });
+            }
+            return res.status(502).json({ success: false, errorType: 'CLIPDROP_ERROR', message: `ClipDrop Background Removal Error: ${detail}` });
+        }
 
         const base64Image = `data:image/png;base64,${Buffer.from(response.data).toString('base64')}`;
-        const { secure_url } = await cloudinary.uploader.upload(base64Image, {
-            folder: 'quick-ai-bg-removed'
-        });
+        
+        let secure_url;
+        try {
+            const uploadResult = await cloudinary.uploader.upload(base64Image, {
+                folder: 'quick-ai-bg-removed'
+            });
+            secure_url = uploadResult.secure_url;
+        } catch (cloudErr) {
+            return res.status(502).json({ success: false, errorType: 'CLOUDINARY_ERROR', message: `Cloudinary Image Upload Failed: ${cloudErr.message}` });
+        }
 
-        await sql`INSERT into creations (user_id, prompt, content, type)
-        values(${userId}, 'Remove background from the image', ${secure_url}, 'image')`;
+        try {
+            await sql`INSERT into creations (user_id, prompt, content, type)
+            values(${userId}, 'Remove background from the image', ${secure_url}, 'image')`;
+        } catch (dbErr) {
+            console.error("Database save warning:", dbErr.message);
+        }
 
         const newUsage = bgRemovalUsage + 1;
         if (plan !== 'premium' && userId) {
-            await clerkClient.users.updateUserMetadata(userId, {
-                privateMetadata: {
-                    ...user?.privateMetadata,
-                    bg_removal_usage: newUsage
-                }
-            });
+            try {
+                await clerkClient.users.updateUserMetadata(userId, {
+                    privateMetadata: {
+                        ...user?.privateMetadata,
+                        bg_removal_usage: newUsage
+                    }
+                });
+            } catch (clerkErr) {
+                console.error("Clerk metadata increment warning:", clerkErr.message);
+            }
         }
 
         res.json({
@@ -314,18 +397,8 @@ export const removeImageBackground = async (req, res) => {
         });
 
     } catch (error) {
-        let errorMsg = error.message;
-        if (error.response?.data) {
-            try {
-                const decoded = JSON.parse(Buffer.from(error.response.data).toString());
-                errorMsg = decoded.error || decoded.message || errorMsg;
-            } catch (e) {
-                const text = Buffer.from(error.response.data).toString();
-                if (text && text.length < 200) errorMsg = text;
-            }
-        }
-        console.error('Error removing background:', errorMsg);
-        res.json({ success: false, message: errorMsg || "Failed to remove background" });
+        console.error('Error removing background:', error);
+        res.status(500).json({ success: false, errorType: 'SERVER_ERROR', message: error.message || "Failed to remove background." });
     }
 };
 
@@ -338,24 +411,31 @@ export const removeImageObject = async (req, res) => {
         const user = await getFullUser(req, userId);
 
         if (!image || !image.buffer) {
-            return res.json({ success: false, message: "No image provided. Please upload an image." });
+            return res.status(400).json({ success: false, errorType: 'INVALID_INPUT', message: "No image provided. Please upload an image." });
         }
 
         if (!object || !object.trim()) {
-            return res.json({ success: false, message: "Please specify the object to remove." });
+            return res.status(400).json({ success: false, errorType: 'INVALID_INPUT', message: "Please specify the object to remove." });
         }
 
         const objRemovalUsage = user?.privateMetadata?.obj_removal_usage || 0;
 
         if (plan !== 'premium' && objRemovalUsage >= 5) {
-            return res.json({ success: false, message: "You've reached your free limit of 5 object removals. Upgrade to premium for unlimited usage." });
+            return res.status(403).json({ success: false, errorType: 'LIMIT_REACHED', message: "You've reached your free limit of 5 object removals. Upgrade to Premium for unlimited removals." });
         }
 
         const base64DataUri = `data:${image.mimetype || 'image/png'};base64,${image.buffer.toString('base64')}`;
-        const { public_id } = await cloudinary.uploader.upload(base64DataUri, {
-            resource_type: 'image',
-            folder: 'quick-ai-obj-removal'
-        });
+        
+        let public_id;
+        try {
+            const uploadResult = await cloudinary.uploader.upload(base64DataUri, {
+                resource_type: 'image',
+                folder: 'quick-ai-obj-removal'
+            });
+            public_id = uploadResult.public_id;
+        } catch (cloudErr) {
+            return res.status(502).json({ success: false, errorType: 'CLOUDINARY_ERROR', message: `Cloudinary upload failed: ${cloudErr.message}` });
+        }
 
         const cleanObject = object.trim();
         const imageUrl = cloudinary.url(public_id, {
@@ -364,17 +444,25 @@ export const removeImageObject = async (req, res) => {
             secure: true
         });
 
-        await sql`INSERT into creations (user_id, prompt, content, type)
-        values(${userId}, ${`Remove ${cleanObject} from the image`}, ${imageUrl}, 'image')`;
+        try {
+            await sql`INSERT into creations (user_id, prompt, content, type)
+            values(${userId}, ${`Remove ${cleanObject} from the image`}, ${imageUrl}, 'image')`;
+        } catch (dbErr) {
+            console.error("Database save warning:", dbErr.message);
+        }
 
         const newUsage = objRemovalUsage + 1;
         if (plan !== 'premium' && userId) {
-            await clerkClient.users.updateUserMetadata(userId, {
-                privateMetadata: {
-                    ...user?.privateMetadata,
-                    obj_removal_usage: newUsage
-                }
-            });
+            try {
+                await clerkClient.users.updateUserMetadata(userId, {
+                    privateMetadata: {
+                        ...user?.privateMetadata,
+                        obj_removal_usage: newUsage
+                    }
+                });
+            } catch (clerkErr) {
+                console.error("Clerk metadata increment warning:", clerkErr.message);
+            }
         }
 
         res.json({
@@ -385,7 +473,7 @@ export const removeImageObject = async (req, res) => {
 
     } catch (error) {
         console.error('Error removing object:', error.message);
-        res.json({ success: false, message: error.message || "Failed to remove object" });
+        res.status(500).json({ success: false, errorType: 'SERVER_ERROR', message: error.message || "Failed to remove object." });
     }
 };
 
@@ -397,35 +485,49 @@ export const resumeReview = async (req, res) => {
         const user = await getFullUser(req, userId);
 
         if (!resume || !resume.buffer) {
-            return res.json({ success: false, message: "No resume provided. Please upload a PDF resume." });
+            return res.status(400).json({ success: false, errorType: 'INVALID_INPUT', message: "No resume provided. Please upload a PDF resume." });
         }
 
         const resumeReviewUsage = user?.privateMetadata?.resume_review_usage || 0;
 
         if (plan !== 'premium' && resumeReviewUsage >= 10) {
-            return res.json({ success: false, message: "You've reached your free limit of 10 resume reviews. Upgrade to premium for unlimited usage." });
+            return res.status(403).json({ success: false, errorType: 'LIMIT_REACHED', message: "You've reached your free limit of 10 resume reviews. Upgrade to Premium for unlimited usage." });
         }
 
         if (resume.size > 5 * 1024 * 1024) {
-            return res.json({ success: false, message: "Resume file size exceeds allowed limit (5MB)." });
+            return res.status(400).json({ success: false, errorType: 'FILE_TOO_LARGE', message: "Resume file size exceeds the allowed limit (5MB)." });
         }
 
-        const pdfData = await pdf(resume.buffer);
+        let pdfData;
+        try {
+            pdfData = await pdf(resume.buffer);
+        } catch (pdfErr) {
+            return res.status(400).json({ success: false, errorType: 'PDF_PARSE_ERROR', message: "Could not parse text from uploaded PDF. Please make sure the file contains selectable text." });
+        }
+
         const prompt = `Review the following resume and provide constructive, actionable feedback on its strengths, weaknesses, formatting, impact, and areas for improvement. Use markdown formatting with clear headers.\n\nResume content:\n${pdfData.text}`;
 
         const content = await generateWithFallbackAndRetry(prompt);
 
-        await sql`INSERT into creations (user_id, prompt, content, type)
-        values(${userId}, 'Review the uploaded Resume', ${content}, 'resume-review')`;
+        try {
+            await sql`INSERT into creations (user_id, prompt, content, type)
+            values(${userId}, 'Review the uploaded Resume', ${content}, 'resume-review')`;
+        } catch (dbErr) {
+            console.error("Database save warning:", dbErr.message);
+        }
 
         const newUsage = resumeReviewUsage + 1;
         if (plan !== 'premium' && userId) {
-            await clerkClient.users.updateUserMetadata(userId, {
-                privateMetadata: {
-                    ...user?.privateMetadata,
-                    resume_review_usage: newUsage
-                }
-            });
+            try {
+                await clerkClient.users.updateUserMetadata(userId, {
+                    privateMetadata: {
+                        ...user?.privateMetadata,
+                        resume_review_usage: newUsage
+                    }
+                });
+            } catch (clerkErr) {
+                console.error("Clerk metadata increment warning:", clerkErr.message);
+            }
         }
 
         res.json({
@@ -436,6 +538,6 @@ export const resumeReview = async (req, res) => {
 
     } catch (error) {
         console.error('Error in resume review:', error);
-        res.json({ success: false, message: error.message || "Failed to review resume. Please try again." });
+        res.status(500).json({ success: false, errorType: 'GENERATION_ERROR', message: error.message || "Failed to review resume. Please try again." });
     }
 };
