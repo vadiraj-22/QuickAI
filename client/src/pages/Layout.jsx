@@ -3,7 +3,7 @@ import { Outlet, useNavigate } from 'react-router-dom'
 import { assets } from '../assets/assets'
 import { Menu, X } from 'lucide-react'
 import Sidebar from '../components/Sidebar'
-import { SignIn, useUser } from '@clerk/clerk-react'
+import { RedirectToSignIn, useUser } from '@clerk/clerk-react'
 
 const Layout = () => {
   const navigate = useNavigate()
@@ -70,9 +70,7 @@ const Layout = () => {
       )}
     </div>
   ) : (
-    <div className='dark flex items-center justify-center h-screen' style={{ background: '#090912' }}>
-      <SignIn fallbackRedirectUrl='/ai' forceRedirectUrl='/ai' />
-    </div>
+    <RedirectToSignIn redirectUrl='/ai' />
   )
 }
 
