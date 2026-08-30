@@ -31,16 +31,19 @@ const Sidebar = ({ sidebar, setSidebar }) => {
         const { data } = await axios.get('/api/user/get-usage-data', {
           headers: { Authorization: `Bearer ${token}` }
         })
-        if (data.success) {
+        if (data && data.success) {
           setIsBackendPremium(!!data.isPremium)
+        } else {
+          setIsBackendPremium(user?.publicMetadata?.plan === 'premium' || user?.unsafeMetadata?.plan === 'premium')
         }
-      } catch (err) {}
+      } catch (err) {
+        setIsBackendPremium(user?.publicMetadata?.plan === 'premium' || user?.unsafeMetadata?.plan === 'premium')
+      }
     }
     checkPremium()
   }, [user])
 
-  const userPlan = (user?.publicMetadata?.plan === 'premium' || isBackendPremium) ? 'premium' : 'free'
-  const isPremium = userPlan === 'premium'
+  const isPremium = isBackendPremium || user?.publicMetadata?.plan === 'premium' || user?.unsafeMetadata?.plan === 'premium'
 
   return (
     <aside
@@ -151,7 +154,7 @@ const Sidebar = ({ sidebar, setSidebar }) => {
           <div className='flex items-center gap-2.5 min-w-0'>
             <div className='relative shrink-0'>
               <img
-                src={user.imageUrl}
+                src={user?.imageUrl || 'https://api.dicebear.com/7.x/bottts/svg'}
                 className='w-8 h-8 rounded-full object-cover ring-1 ring-white/20'
                 alt='avatar'
               />
@@ -159,7 +162,7 @@ const Sidebar = ({ sidebar, setSidebar }) => {
             </div>
             <div className='min-w-0'>
               <p className='text-sm font-medium text-white/90 truncate leading-tight'>
-                {user.fullName}
+                {user?.fullName || user?.firstName || user?.emailAddresses?.[0]?.emailAddress || 'My Account'}
               </p>
               <p className='text-[11px] text-white/40 leading-tight flex items-center gap-1'>
                 {isPremium ? (

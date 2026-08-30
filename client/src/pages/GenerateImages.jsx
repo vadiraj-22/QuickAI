@@ -36,7 +36,7 @@ const GenerateImages = () => {
   const { getToken } = useAuth()
   const { user } = useUser()
 
-  const effectiveIsPremium = user?.publicMetadata?.plan === 'premium' || isPremium;
+  const effectiveIsPremium = isPremium || user?.publicMetadata?.plan === 'premium' || user?.unsafeMetadata?.plan === 'premium';
 
   const fetchUsageData = async () => {
     try {

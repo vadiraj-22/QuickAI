@@ -106,13 +106,17 @@ export const updateUserPlan = async (req, res) => {
     try {
         const userId = getUserId(req);
         const { plan } = req.body;
-        const targetPlan = plan || 'premium';
+        const targetPlan = (plan === 'premium') ? 'premium' : 'free';
 
         const user = await clerkClient.users.getUser(userId);
 
         await clerkClient.users.updateUserMetadata(userId, {
             publicMetadata: {
                 ...user.publicMetadata,
+                plan: targetPlan
+            },
+            privateMetadata: {
+                ...user.privateMetadata,
                 plan: targetPlan
             },
             unsafeMetadata: {
@@ -124,9 +128,11 @@ export const updateUserPlan = async (req, res) => {
         res.json({
             success: true,
             message: `Successfully updated plan to ${targetPlan === 'premium' ? 'Premium' : 'Free'}!`,
-            plan: targetPlan
+            plan: targetPlan,
+            isPremium: targetPlan === 'premium'
         });
     } catch (error) {
+        console.error("updateUserPlan error:", error);
         res.json({ success: false, message: error.message });
     }
 };

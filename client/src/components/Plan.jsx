@@ -33,7 +33,8 @@ const Plan = () => {
     fetchPlanStatus()
   }, [isSignedIn, user])
 
-  const userPlan = (user?.publicMetadata?.plan === 'premium' || isBackendPremium) ? 'premium' : 'free'
+  const isUserPremium = isBackendPremium || user?.publicMetadata?.plan === 'premium' || user?.unsafeMetadata?.plan === 'premium'
+  const userPlan = isUserPremium ? 'premium' : 'free'
 
   const getCtaText = (planId) => {
     if (!isSignedIn) {
@@ -97,8 +98,16 @@ const Plan = () => {
       if (data.success) {
         toast.success(data.message)
         setIsBackendPremium(planId === 'premium')
-        // Force refresh user data if necessary
-        window.location.reload()
+        
+        // Instantly reload Clerk user data to avoid stale cached metadata
+        if (user?.reload) {
+          try {
+            await user.reload()
+          } catch (e) {
+            console.error('Error reloading user metadata:', e)
+          }
+        }
+        await fetchPlanStatus()
       } else {
         toast.error(data.message)
       }

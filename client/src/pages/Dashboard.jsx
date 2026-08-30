@@ -49,11 +49,11 @@ const Dashboard = () => {
         setCreations(creationsRes.data.creations)
       }
       
-      const userPlan = user?.publicMetadata?.plan
-      if (userPlan === 'premium' || usageRes.data?.isPremium) {
-        setIsPremium(true)
+      if (usageRes.data && usageRes.data.success) {
+        setIsPremium(!!usageRes.data.isPremium)
       } else {
-        setIsPremium(false)
+        const userPlan = user?.publicMetadata?.plan || user?.unsafeMetadata?.plan
+        setIsPremium(userPlan === 'premium')
       }
     } catch (error) {
       toast.error(error.message)
