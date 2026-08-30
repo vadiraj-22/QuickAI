@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useUser, useClerk, useAuth } from '@clerk/clerk-react'
 import { Eraser, FileText, Hash, House, Image, LogOut, Scissors, SquarePen, Users, Crown } from 'lucide-react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 
 axios.defaults.baseURL = import.meta.env.VITE_BASE_URL || 'https://quickaibackend-five.vercel.app'
@@ -15,12 +15,14 @@ const navItems = [
   { to: '/ai/remove-object', label: 'Remove Object', Icon: Scissors, gradient: 'from-[#8E37EB] to-[#4A7AFF]', glow: 'rgba(74,122,255,0.25)' },
   { to: '/ai/review-resume', label: 'Review Resume', Icon: FileText, gradient: 'from-[#009BB3] to-[#00DA83]', glow: 'rgba(0,218,131,0.25)' },
   { to: '/ai/community', label: 'Community', Icon: Users, gradient: 'from-[#f472b6] to-[#fb923c]', glow: 'rgba(244,114,182,0.25)' },
+  { to: '/ai/plan', label: 'Plan & Billing', Icon: Crown, gradient: 'from-[#f59e0b] to-[#fbbf24]', glow: 'rgba(245,158,11,0.25)' },
 ]
 
 const Sidebar = ({ sidebar, setSidebar }) => {
   const { user } = useUser()
   const { signOut, openUserProfile } = useClerk()
   const { getToken } = useAuth()
+  const navigate = useNavigate()
   const [isBackendPremium, setIsBackendPremium] = useState(false)
 
   useEffect(() => {
@@ -34,16 +36,31 @@ const Sidebar = ({ sidebar, setSidebar }) => {
         if (data && data.success) {
           setIsBackendPremium(!!data.isPremium)
         } else {
-          setIsBackendPremium(user?.publicMetadata?.plan === 'premium' || user?.unsafeMetadata?.plan === 'premium')
+          setIsBackendPremium(
+            user?.publicMetadata?.plan === 'premium' || 
+            user?.unsafeMetadata?.plan === 'premium' ||
+            user?.publicMetadata?.isPremium === true ||
+            user?.unsafeMetadata?.isPremium === true
+          )
         }
       } catch (err) {
-        setIsBackendPremium(user?.publicMetadata?.plan === 'premium' || user?.unsafeMetadata?.plan === 'premium')
+        setIsBackendPremium(
+          user?.publicMetadata?.plan === 'premium' || 
+          user?.unsafeMetadata?.plan === 'premium' ||
+          user?.publicMetadata?.isPremium === true ||
+          user?.unsafeMetadata?.isPremium === true
+        )
       }
     }
     checkPremium()
   }, [user])
 
-  const isPremium = isBackendPremium || user?.publicMetadata?.plan === 'premium' || user?.unsafeMetadata?.plan === 'premium'
+  const isPremium = 
+    isBackendPremium || 
+    user?.publicMetadata?.plan === 'premium' || 
+    user?.unsafeMetadata?.plan === 'premium' ||
+    user?.publicMetadata?.isPremium === true ||
+    user?.unsafeMetadata?.isPremium === true
 
   return (
     <aside
@@ -164,14 +181,20 @@ const Sidebar = ({ sidebar, setSidebar }) => {
               <p className='text-sm font-medium text-white/90 truncate leading-tight'>
                 {user?.fullName || user?.firstName || user?.emailAddresses?.[0]?.emailAddress || 'My Account'}
               </p>
-              <p className='text-[11px] text-white/40 leading-tight flex items-center gap-1'>
+              <p 
+                onClick={(e) => { e.stopPropagation(); navigate('/ai/plan'); setSidebar(false); }}
+                className='text-[11px] leading-tight flex items-center gap-1.5 hover:underline cursor-pointer'
+              >
                 {isPremium ? (
                   <>
-                    <Crown className='w-2.5 h-2.5 text-amber-400' />
+                    <Crown className='w-3 h-3 text-amber-400' />
                     <span className='text-amber-400 font-semibold'>Premium</span>
                   </>
                 ) : (
-                  <span>Free Plan</span>
+                  <>
+                    <span className='text-white/40'>Free Plan</span>
+                    <span className='text-[10px] px-1.5 py-0.2 bg-amber-400/20 text-amber-300 rounded font-medium hover:bg-amber-400/30'>Upgrade</span>
+                  </>
                 )}
               </p>
             </div>

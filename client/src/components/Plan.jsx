@@ -33,7 +33,12 @@ const Plan = () => {
     fetchPlanStatus()
   }, [isSignedIn, user])
 
-  const isUserPremium = isBackendPremium || user?.publicMetadata?.plan === 'premium' || user?.unsafeMetadata?.plan === 'premium'
+  const isUserPremium = 
+    isBackendPremium || 
+    user?.publicMetadata?.plan === 'premium' || 
+    user?.unsafeMetadata?.plan === 'premium' ||
+    user?.publicMetadata?.isPremium === true ||
+    user?.unsafeMetadata?.isPremium === true
   const userPlan = isUserPremium ? 'premium' : 'free'
 
   const getCtaText = (planId) => {

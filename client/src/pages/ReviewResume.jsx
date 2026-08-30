@@ -21,7 +21,12 @@ const ReviewResume = () => {
   const { getToken } = useAuth()
   const { user } = useUser()
 
-  const effectiveIsPremium = isPremium || user?.publicMetadata?.plan === 'premium' || user?.unsafeMetadata?.plan === 'premium';
+  const effectiveIsPremium = 
+    isPremium || 
+    user?.publicMetadata?.plan === 'premium' || 
+    user?.unsafeMetadata?.plan === 'premium' ||
+    user?.publicMetadata?.isPremium === true ||
+    user?.unsafeMetadata?.isPremium === true;
 
   const fetchUsageData = async () => {
     try {

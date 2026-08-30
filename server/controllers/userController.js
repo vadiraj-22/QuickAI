@@ -39,21 +39,24 @@ export const getUserCreations = async(req , res)=>{
         const free_usage = req.free_usage || 0;
         
         // Use user object from auth middleware or fetch safely
-        const user = req.user || (userId ? await clerkClient.users.getUser(userId) : null);
+        const user = req.user || (userId ? await clerkClient.users.getUser(userId).catch(() => null) : null);
         const bgRemovalUsage = user?.privateMetadata?.bg_removal_usage || 0;
         const objRemovalUsage = user?.privateMetadata?.obj_removal_usage || 0;
         const resumeReviewUsage = user?.privateMetadata?.resume_review_usage || 0;
         
+        const isPremium = plan === 'premium';
+        
         res.json({
             success: true, 
+            plan: isPremium ? 'premium' : 'free',
+            isPremium: isPremium,
             usageCount: free_usage,
             bgRemovalUsage: bgRemovalUsage,
-            bgRemovalLeft: plan === 'premium' ? 'unlimited' : Math.max(0, 5 - bgRemovalUsage),
+            bgRemovalLeft: isPremium ? 'unlimited' : Math.max(0, 5 - bgRemovalUsage),
             objRemovalUsage: objRemovalUsage,
-            objRemovalLeft: plan === 'premium' ? 'unlimited' : Math.max(0, 5 - objRemovalUsage),
+            objRemovalLeft: isPremium ? 'unlimited' : Math.max(0, 5 - objRemovalUsage),
             resumeReviewUsage: resumeReviewUsage,
-            resumeReviewLeft: plan === 'premium' ? 'unlimited' : Math.max(0, 10 - resumeReviewUsage),
-            isPremium: plan === 'premium'
+            resumeReviewLeft: isPremium ? 'unlimited' : Math.max(0, 10 - resumeReviewUsage),
         });
 
     } catch (error) {
@@ -113,15 +116,21 @@ export const updateUserPlan = async (req, res) => {
         await clerkClient.users.updateUserMetadata(userId, {
             publicMetadata: {
                 ...user.publicMetadata,
-                plan: targetPlan
+                plan: targetPlan,
+                isPremium: targetPlan === 'premium',
+                tier: targetPlan
             },
             privateMetadata: {
                 ...user.privateMetadata,
-                plan: targetPlan
+                plan: targetPlan,
+                isPremium: targetPlan === 'premium',
+                tier: targetPlan
             },
             unsafeMetadata: {
                 ...user.unsafeMetadata,
-                plan: targetPlan
+                plan: targetPlan,
+                isPremium: targetPlan === 'premium',
+                tier: targetPlan
             }
         });
 
