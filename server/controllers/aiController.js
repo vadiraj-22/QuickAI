@@ -92,15 +92,14 @@ export const generateArticle = async (req, res) => {
     } catch (error) {
         console.error('Error generating article:', error);
 
-        // Return appropriate error message to client
-        let message = "Failed to generate article. Please try again.";
+        let message = error.message || "Failed to generate article. Please try again.";
 
         if (error.message?.includes('429') || error.message?.includes('Too Many Requests')) {
             message = "Server is busy with too many requests. Please try again in a moment.";
         } else if (error.message?.includes('Quota') || error.message?.includes('RESOURCE_EXHAUSTED')) {
             message = "API Usage Quota Exceeded. Please try again later or upgrade.";
-        } else if (error.message?.includes('API_KEY_INVALID') || error.status === 400) {
-            message = "Invalid Gemini API Key. Please check your .env file.";
+        } else if (error.message?.includes('API_KEY_INVALID') || error.message?.includes('API key not valid') || error.status === 400) {
+            message = "Invalid or expired Gemini API Key. Please update GEMINI_API_KEY in environment variables.";
         }
 
         res.json({ success: false, message });
@@ -138,14 +137,14 @@ export const generateBlogTitle = async (req, res) => {
 
     } catch (error) {
         console.error('Error generating blog title:', error);
-        let message = "Failed to generate blog title. Please try again.";
+        let message = error.message || "Failed to generate blog title. Please try again.";
 
         if (error.message?.includes('429') || error.message?.includes('Too Many Requests')) {
             message = "Server is busy with too many requests. Please try again in a moment.";
         } else if (error.message?.includes('Quota') || error.message?.includes('RESOURCE_EXHAUSTED')) {
             message = "API Usage Quota Exceeded. Please try again later or upgrade.";
-        } else if (error.message?.includes('API_KEY_INVALID') || error.status === 400) {
-            message = "Invalid Gemini API Key. Please check your .env file.";
+        } else if (error.message?.includes('API_KEY_INVALID') || error.message?.includes('API key not valid') || error.status === 400) {
+            message = "Invalid or expired Gemini API Key. Please update GEMINI_API_KEY in environment variables.";
         }
 
         res.json({ success: false, message });
@@ -412,8 +411,8 @@ export const resumeReview = async (req, res) => {
             message = "Server is busy with too many requests. Please try again in a moment.";
         } else if (error.message?.includes('Quota') || error.message?.includes('RESOURCE_EXHAUSTED')) {
             message = "API Usage Quota Exceeded. Please try again later or upgrade.";
-        } else if (error.message?.includes('API_KEY_INVALID') || error.status === 400) {
-            message = "Invalid Gemini API Key. Please check your .env file.";
+        } else if (error.message?.includes('API_KEY_INVALID') || error.message?.includes('API key not valid') || error.status === 400) {
+            message = "Invalid or expired Gemini API Key. Please update GEMINI_API_KEY in environment variables.";
         }
         res.json({ success: false, message });
     }
