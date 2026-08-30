@@ -17,7 +17,7 @@
     },
     {
       "source": "/api/(.*)",
-      "destination": "https://quick-ai-backend-mu-nine.vercel.app/api/$1"
+      "destination": "https://quickaibackend-five.vercel.app/api/$1"
     },
     {
       "source": "/(.*)",

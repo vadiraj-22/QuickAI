@@ -20,7 +20,7 @@ async function downloadImage(url, filename = 'image.png') {
   window.URL.revokeObjectURL(blobUrl)
 }
 
-axios.defaults.baseURL = import.meta.env.VITE_BASE_URL || 'https://quick-ai-backend-mu-nine.vercel.app'
+axios.defaults.baseURL = import.meta.env.VITE_BASE_URL || 'https://quickaibackend-five.vercel.app'
 
 const ACCENT = '#00AD25'
 const ACCENT_GLOW = 'rgba(0,173,37,0.2)'

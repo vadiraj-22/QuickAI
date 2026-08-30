@@ -1,14 +1,23 @@
-import { clerkClient } from "@clerk/express";
+import { clerkClient, getAuth } from "@clerk/express";
 
 // middleware to check the user id and haspremiumplan 
 
 export const auth = async (req, res, next) => {
     try {
-        const authObj = typeof req.auth === 'function' ? req.auth() : (req.auth || {});
-        const userId = authObj.userId || req.auth?.userId;
+        let userId = null;
+        try {
+            const authData = getAuth(req);
+            userId = authData?.userId;
+        } catch (_) {
+            // fallback
+        }
+        if (!userId) {
+            const authObj = typeof req.auth === 'function' ? req.auth() : (req.auth || {});
+            userId = authObj.userId || req.auth?.userId;
+        }
 
         if (!userId) {
-            return res.status(401).json({ success: false, message: "Unauthorized access" });
+            return res.status(401).json({ success: false, message: "Unauthorized access. Please sign in to continue." });
         }
 
         let isPremiumPlan = false;

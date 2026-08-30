@@ -8,7 +8,7 @@ import LoadingOverlay, { PIPELINE_MESSAGES } from '../components/LoadingOverlay'
 
 import { handleApiError, handleApiResponse } from '../lib/errorHandler'
 
-axios.defaults.baseURL = import.meta.env.VITE_BASE_URL || 'https://quick-ai-backend-mu-nine.vercel.app'
+axios.defaults.baseURL = import.meta.env.VITE_BASE_URL || 'https://quickaibackend-five.vercel.app'
 
 const ACCENT = '#4A7AFF'
 const ACCENT_GLOW = 'rgba(74,122,255,0.18)'

@@ -1,18 +1,13 @@
 import express from "express"
 import { getPublishedCreations, getUserCreations, toggleLikeCreations, getUsageData, updateUserPlan } from "../controllers/userController.js";
-import {auth} from "../middlewares/auth.js"
-import { requireAuth } from '@clerk/express';
+import { auth } from "../middlewares/auth.js"
 
-const userRouter= express.Router();
+const userRouter = express.Router();
 
-// Don't apply requireAuth globally - let individual routes handle it
-// This allows OPTIONS preflight requests to pass through
-// userRouter.use(requireAuth())
-
-userRouter.get('/get-user-creations', requireAuth(), auth, getUserCreations )
-userRouter.get('/get-published-creations', requireAuth(), auth, getPublishedCreations )
-userRouter.get('/get-usage-data', requireAuth(), auth, getUsageData )
-userRouter.post('/toggle-like-creations', requireAuth(), auth, toggleLikeCreations )
-userRouter.post('/update-plan', requireAuth(), auth, updateUserPlan )
+userRouter.get('/get-user-creations', auth, getUserCreations)
+userRouter.get('/get-published-creations', auth, getPublishedCreations)
+userRouter.get('/get-usage-data', auth, getUsageData)
+userRouter.post('/toggle-like-creations', auth, toggleLikeCreations)
+userRouter.post('/update-plan', auth, updateUserPlan)
 
 export default userRouter;

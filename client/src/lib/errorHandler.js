@@ -73,9 +73,22 @@ export const handleApiResponse = (data, context = 'AI Tool') => {
     return { success: true, content: data.content };
   }
 
-  const message = data?.message || (typeof data === 'string' && data.includes('<!doctype')
-    ? 'Backend returned HTML. Check API configuration.'
-    : `Failed to complete ${context}`);
+  let message = data?.message;
+  if (!message) {
+    if (typeof data === 'string') {
+      if (data.includes('Server is live') || data.includes('API WORKING')) {
+        message = 'Authentication session invalid or backend redirected. Please sign in again.';
+      } else if (data.includes('<!doctype') || data.includes('<html')) {
+        message = 'Backend returned an HTML response page. Check backend API deployment.';
+      } else if (data.trim().length > 0 && data.trim().length < 150) {
+        message = data.trim();
+      } else {
+        message = `Failed to complete ${context}`;
+      }
+    } else {
+      message = `Failed to complete ${context}`;
+    }
+  }
 
   console.error(`[${context} Backend Error]:`, { data, message });
   toast.error(message, { duration: 6000 });

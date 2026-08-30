@@ -7,7 +7,7 @@ import Markdown from 'react-markdown'
 import LoadingOverlay, { PIPELINE_MESSAGES } from '../components/LoadingOverlay'
 import { handleApiError, handleApiResponse } from '../lib/errorHandler'
 
-axios.defaults.baseURL = import.meta.env.VITE_BASE_URL || 'https://quick-ai-backend-mu-nine.vercel.app'
+axios.defaults.baseURL = import.meta.env.VITE_BASE_URL || 'https://quickaibackend-five.vercel.app'
 
 const ACCENT = '#00DA83'
 const ACCENT_GLOW = 'rgba(0,218,131,0.2)'
