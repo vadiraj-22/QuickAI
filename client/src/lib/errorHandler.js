@@ -72,15 +72,15 @@ export const handleApiError = (error, context = 'AI Tool') => {
 };
 
 export const handleApiResponse = (data, context = 'AI Tool') => {
-  if (data && data.success) {
+  if (data && data.success && data.content !== undefined) {
     return { success: true, content: data.content };
   }
 
   let message = data?.message;
-  if (!message) {
+  if (!message || (data && data.success && data.content === undefined)) {
     if (typeof data === 'string') {
-      if (data.includes('Server is live') || data.includes('API WORKING')) {
-        message = 'Backend reached root instead of API route. Please check VITE_BASE_URL configuration.';
+      if (data.includes('Server is live') || data.includes('API WORKING') || data.includes('live and running')) {
+        message = 'Backend reached root instead of API route. Please redeploy frontend on Vercel to apply the new VITE_BASE_URL.';
       } else if (data.includes('<!doctype') || data.includes('<html')) {
         message = 'Backend returned an HTML response page. Check backend API deployment.';
       } else if (data.trim().length > 0 && data.trim().length < 150) {
@@ -88,8 +88,10 @@ export const handleApiResponse = (data, context = 'AI Tool') => {
       } else {
         message = `Failed to complete ${context}`;
       }
+    } else if (data && data.status === 'healthy') {
+      message = 'Backend reached root health endpoint instead of API route. Please check your backend routing.';
     } else {
-      message = `Failed to complete ${context}`;
+      message = data?.message || `Failed to complete ${context}`;
     }
   }
 
