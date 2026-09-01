@@ -15,7 +15,6 @@ if (!PUBLISHABLE_KEY) {
 createRoot(document.getElementById('root')).render(
   <ClerkProvider
     publishableKey={PUBLISHABLE_KEY}
-    clerkJSUrl="https://bright-basilisk-76.clerk.accounts.dev/npm/@clerk/clerk-js@5/dist/clerk.browser.js"
     signInFallbackRedirectUrl='/ai'
     signUpFallbackRedirectUrl='/ai'
     afterSignOutUrl='/'

@@ -2,10 +2,8 @@ import { useState, useEffect } from 'react'
 import { useUser, useAuth } from '@clerk/clerk-react'
 import { useNavigate } from 'react-router-dom'
 import { Check, Star, ArrowRight, UserCheck, Loader2 } from 'lucide-react'
-import axios from 'axios'
+import api from '../lib/api'
 import toast from 'react-hot-toast'
-
-axios.defaults.baseURL = import.meta.env.VITE_BASE_URL || 'https://quickaibackend-five.vercel.app'
 
 const Plan = () => {
   const { isSignedIn, user } = useUser()
@@ -18,7 +16,7 @@ const Plan = () => {
     if (!isSignedIn) return
     try {
       const token = await getToken()
-      const { data } = await axios.get('/api/user/get-usage-data', {
+      const { data } = await api.get('/api/user/get-usage-data', {
         headers: { Authorization: `Bearer ${token}` }
       })
       if (data.success) {
@@ -94,7 +92,7 @@ const Plan = () => {
       setLoadingPlan(planId)
       const token = await getToken()
       
-      const { data } = await axios.post(
+      const { data } = await api.post(
         '/api/user/update-plan', 
         { plan: planId },
         { headers: { Authorization: `Bearer ${token}` } }

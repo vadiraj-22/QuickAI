@@ -2,9 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useUser, useClerk, useAuth } from '@clerk/clerk-react'
 import { Eraser, FileText, Hash, House, Image, LogOut, Scissors, SquarePen, Users, Crown } from 'lucide-react'
 import { NavLink, useNavigate } from 'react-router-dom'
-import axios from 'axios'
-
-axios.defaults.baseURL = import.meta.env.VITE_BASE_URL || 'https://quickaibackend-five.vercel.app'
+import api from '../lib/api'
 
 const navItems = [
   { to: '/ai', label: 'Dashboard', Icon: House, gradient: 'from-[#3C81F6] to-[#60a5fa]', glow: 'rgba(60,129,246,0.25)' },
@@ -30,7 +28,7 @@ const Sidebar = ({ sidebar, setSidebar }) => {
       if (!user) return
       try {
         const token = await getToken()
-        const { data } = await axios.get('/api/user/get-usage-data', {
+        const { data } = await api.get('/api/user/get-usage-data', {
           headers: { Authorization: `Bearer ${token}` }
         })
         if (data && data.success) {

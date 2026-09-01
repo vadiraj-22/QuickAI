@@ -3,12 +3,10 @@ import { Hash, Sparkles } from 'lucide-react'
 import React, { useState } from 'react'
 import toast from 'react-hot-toast'
 import Markdown from 'react-markdown'
-import axios from 'axios'
+import api from '../lib/api'
 import LoadingOverlay, { PIPELINE_MESSAGES } from '../components/LoadingOverlay'
 
 import { handleApiError, handleApiResponse } from '../lib/errorHandler'
-
-axios.defaults.baseURL = import.meta.env.VITE_BASE_URL || 'https://quickaibackend-five.vercel.app'
 
 const ACCENT = '#8E37EB'
 const ACCENT_GLOW = 'rgba(142,55,235,0.2)'
@@ -28,7 +26,7 @@ const BlogTitles = () => {
       setLoading(true)
       const prompt = `Generate a Blog title for the keyword ${input} in the category ${selectedCategory}`
       const token = await getToken()
-      const { data } = await axios.post('/api/ai/generate-blog-title', { prompt }, {
+      const { data } = await api.post('/api/ai/generate-blog-title', { prompt }, {
         headers: { Authorization: `Bearer ${token}` },
         timeout: 55000
       })

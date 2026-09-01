@@ -3,10 +3,8 @@ import { dummyCreationData } from '../assets/assets'
 import { Gem, Sparkles, TrendingUp, Zap } from 'lucide-react'
 import { useUser, useAuth } from '@clerk/clerk-react'
 import CreationItem from '../components/CreationItem'
-import axios from 'axios'
+import api from '../lib/api'
 import toast from 'react-hot-toast'
-
-axios.defaults.baseURL = import.meta.env.VITE_BASE_URL || 'https://quickaibackend-five.vercel.app'
 
 const StatCard = ({ label, value, icon: Icon, gradient, glow }) => (
   <div
@@ -41,8 +39,8 @@ const Dashboard = () => {
     try {
       const token = await getToken()
       const [creationsRes, usageRes] = await Promise.all([
-        axios.get('/api/user/get-user-creations', { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: { success: false } })),
-        axios.get('/api/user/get-usage-data', { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: { success: false } }))
+        api.get('/api/user/get-user-creations', { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: { success: false } })),
+        api.get('/api/user/get-usage-data', { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: { success: false } }))
       ])
 
       if (creationsRes.data?.success) {

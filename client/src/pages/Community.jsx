@@ -1,10 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useUser, useAuth } from '@clerk/clerk-react'
 import { Heart, ImageIcon, Users } from 'lucide-react'
-import axios from 'axios'
+import api from '../lib/api'
 import toast from 'react-hot-toast'
-
-axios.defaults.baseURL = import.meta.env.VITE_BASE_URL || 'https://quickaibackend-five.vercel.app'
 
 const Community = () => {
   const [creations, setCreations] = useState([])
@@ -14,7 +12,7 @@ const Community = () => {
 
   const fetchCreations = async () => {
     try {
-      const { data } = await axios.get('/api/user/get-published-creations', {
+      const { data } = await api.get('/api/user/get-published-creations', {
         headers: { Authorization: `Bearer ${await getToken()}` },
       })
       if (data.success) {
@@ -30,7 +28,7 @@ const Community = () => {
 
   const imageLikeToggle = async id => {
     try {
-      const { data } = await axios.post('/api/user/toggle-like-creations', { id }, {
+      const { data } = await api.post('/api/user/toggle-like-creations', { id }, {
         headers: { Authorization: `Bearer ${await getToken()}` },
       })
       if (data.success) {

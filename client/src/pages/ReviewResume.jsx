@@ -1,13 +1,11 @@
 import { FileText, Sparkles, Upload } from 'lucide-react'
 import React, { useState, useEffect } from 'react'
-import axios from 'axios'
+import api from '../lib/api'
 import { useAuth, useUser } from '@clerk/clerk-react'
 import toast from 'react-hot-toast'
 import Markdown from 'react-markdown'
 import LoadingOverlay, { PIPELINE_MESSAGES } from '../components/LoadingOverlay'
 import { handleApiError, handleApiResponse } from '../lib/errorHandler'
-
-axios.defaults.baseURL = import.meta.env.VITE_BASE_URL || 'https://quickaibackend-five.vercel.app'
 
 const ACCENT = '#00DA83'
 const ACCENT_GLOW = 'rgba(0,218,131,0.2)'
@@ -30,7 +28,7 @@ const ReviewResume = () => {
 
   const fetchUsageData = async () => {
     try {
-      const { data } = await axios.get('/api/user/get-usage-data', {
+      const { data } = await api.get('/api/user/get-usage-data', {
         headers: { Authorization: `Bearer ${await getToken()}` },
       })
       if (data.success) {
@@ -54,7 +52,7 @@ const ReviewResume = () => {
       const formData = new FormData()
       formData.append('resume', input)
       const token = await getToken()
-      const { data } = await axios.post('/api/ai/resume-review', formData, {
+      const { data } = await api.post('/api/ai/resume-review', formData, {
         headers: { 
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'

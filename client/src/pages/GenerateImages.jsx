@@ -1,6 +1,6 @@
 import { Image, Sparkles } from 'lucide-react'
 import React, { useState, useEffect } from 'react'
-import axios from 'axios'
+import api from '../lib/api'
 import { useAuth, useUser } from '@clerk/clerk-react'
 import toast from 'react-hot-toast'
 import LoadingOverlay, { PIPELINE_MESSAGES } from '../components/LoadingOverlay'
@@ -19,8 +19,6 @@ async function downloadImage(url, filename = 'image.png') {
   document.body.removeChild(link)
   window.URL.revokeObjectURL(blobUrl)
 }
-
-axios.defaults.baseURL = import.meta.env.VITE_BASE_URL || 'https://quickaibackend-five.vercel.app'
 
 const ACCENT = '#00AD25'
 const ACCENT_GLOW = 'rgba(0,173,37,0.2)'
@@ -47,7 +45,7 @@ const GenerateImages = () => {
 
   const fetchUsageData = async () => {
     try {
-      const { data } = await axios.get('/api/user/get-usage-data', {
+      const { data } = await api.get('/api/user/get-usage-data', {
         headers: { Authorization: `Bearer ${await getToken()}` },
       })
       if (data.success) {
@@ -67,7 +65,7 @@ const GenerateImages = () => {
       setLoading(true)
       const prompt = `Generate an Image of ${input} in the style ${selectedStyle}`
       const token = await getToken()
-      const { data } = await axios.post('/api/ai/generate-image', { prompt, publish }, {
+      const { data } = await api.post('/api/ai/generate-image', { prompt, publish }, {
         headers: { Authorization: `Bearer ${token}` },
         timeout: 55000
       })

@@ -1,14 +1,12 @@
 import { Edit, Sparkles } from 'lucide-react'
 import React, { useState } from 'react'
-import axios from 'axios'
+import api from '../lib/api'
 import { useAuth } from '@clerk/clerk-react'
 import toast from 'react-hot-toast'
 import Markdown from 'react-markdown'
 import LoadingOverlay, { PIPELINE_MESSAGES } from '../components/LoadingOverlay'
 
 import { handleApiError, handleApiResponse } from '../lib/errorHandler'
-
-axios.defaults.baseURL = import.meta.env.VITE_BASE_URL || 'https://quickaibackend-five.vercel.app'
 
 const ACCENT = '#4A7AFF'
 const ACCENT_GLOW = 'rgba(74,122,255,0.18)'
@@ -31,7 +29,7 @@ const WriteArticle = () => {
     try {
       setLoading(true)
       const token = await getToken()
-      const { data } = await axios.post(
+      const { data } = await api.post(
         '/api/ai/generate-article',
         { prompt: input, length: selectedLength.length },
         { headers: { Authorization: `Bearer ${token}` }, timeout: 55000 }

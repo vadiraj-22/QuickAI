@@ -14,7 +14,7 @@ export const parseErrorMessage = (error, fallbackMessage = 'An unexpected error 
         return 'Serverless Gateway Timeout (504). The AI generation took longer than the server limit. Please try again with a simpler prompt.';
       }
       if (status === 502 || status === 503) {
-        return `Backend Server Unavailable (${status}). Please verify the backend deployment on Vercel.`;
+        return `Backend Server Unavailable (${status}). Please verify your backend deployment on Render/Vercel.`;
       }
       return `Server Error (${status}). The backend returned an HTML error page.`;
     }
@@ -28,7 +28,10 @@ export const parseErrorMessage = (error, fallbackMessage = 'An unexpected error 
       return 'Unauthorized (401). Your session may have expired. Please sign in again.';
     }
     if (status === 403) {
-      return 'Forbidden (403). You do not have permission to perform this action.';
+      return 'Forbidden (403). You do not have permission to perform this action or usage limit reached.';
+    }
+    if (status === 404) {
+      return 'API Route Not Found (404). Please check your backend URL and route paths.';
     }
     if (status === 429) {
       return 'Too Many Requests (429). Rate limit exceeded. Please wait a moment and try again.';
@@ -43,10 +46,10 @@ export const parseErrorMessage = (error, fallbackMessage = 'An unexpected error 
 
   // 2. If it's a network error / timeout
   if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
-    return 'Request timed out. The server took too long to respond.';
+    return 'Request timed out. The server took too long to respond (AI generation may still be running).';
   }
   if (error.message === 'Network Error' || !error.response) {
-    return 'Network Error. Could not connect to the backend server. Please check your internet or VITE_BASE_URL configuration.';
+    return 'Network Error. Could not connect to the backend server. Please verify VITE_BASE_URL points to your active backend (Render or Vercel).';
   }
 
   // 3. Normal Error or string
@@ -77,7 +80,7 @@ export const handleApiResponse = (data, context = 'AI Tool') => {
   if (!message) {
     if (typeof data === 'string') {
       if (data.includes('Server is live') || data.includes('API WORKING')) {
-        message = 'Authentication session invalid or backend redirected. Please sign in again.';
+        message = 'Backend reached root instead of API route. Please check VITE_BASE_URL configuration.';
       } else if (data.includes('<!doctype') || data.includes('<html')) {
         message = 'Backend returned an HTML response page. Check backend API deployment.';
       } else if (data.trim().length > 0 && data.trim().length < 150) {
