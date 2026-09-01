@@ -5,7 +5,7 @@ import {BrowserRouter} from 'react-router-dom'
 import { ClerkProvider } from '@clerk/clerk-react'
 
 // Import your Publishable Key
-const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
+const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || 'pk_test_c3VpdGVkLXJpbmd0YWlsLTQ1MDEuY2xlcmsuYWNjb3VudHMuZGV2JA'
 
 if (!PUBLISHABLE_KEY) {
   throw new Error('Missing Publishable Key: Please set VITE_CLERK_PUBLISHABLE_KEY in client/.env')
